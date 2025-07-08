@@ -187,9 +187,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       );
       saveChangesLocally(updatedMessages);
     }
-    
-    // 即時保存
-    saveChangesToParent(updatedMessages);
   };
 
   const formatDateTimeForInput = (date: Date) => {
@@ -222,8 +219,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       setEditingText('');
       setEditingTimestamp('');
       
-      // 即時保存
-      saveChangesToParent(updatedMessages);
+      saveChangesLocally(updatedMessages);
     }
   };
 
@@ -274,8 +270,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     saveChangesLocally(updatedMessages);
     setShowNameEditor(false);
     
-    // 即時保存
-    saveChangesToParent(updatedMessages);
+    saveChangesLocally(updatedMessages);
   };
 
   // メッセージのグループ化判定
