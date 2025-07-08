@@ -14,6 +14,14 @@ export interface Message {
   avatarSettings?: AvatarSettings;
   userName?: string;
   isRead?: boolean; // 既読状態
+  userId?: string; // ユーザーを識別するID
+}
+
+export interface User {
+  id: string;
+  name: string;
+  avatar?: string;
+  avatarSettings?: AvatarSettings | null;
 }
 
 export interface ChatRoom {
@@ -22,4 +30,6 @@ export interface ChatRoom {
   avatar?: string;
   avatarSettings?: AvatarSettings;
   messages: Message[];
+  participants?: User[]; // グループチャットの参加者
+  isGroup?: boolean; // グループチャットかどうか
 }

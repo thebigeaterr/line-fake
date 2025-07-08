@@ -33,12 +33,23 @@ interface UserData {
   otherUserName: string;
   otherAvatarSettings: AvatarSettings | null;
   userAvatarSettings: AvatarSettings | null;
+  participants?: Array<{
+    id: string;
+    name: string;
+    avatarSettings: AvatarSettings | null;
+  }>;
+  isGroup?: boolean;
 }
 
 const defaultUserData: UserData = {
   otherUserName: 'サンプルユーザー',
   otherAvatarSettings: null,
-  userAvatarSettings: null
+  userAvatarSettings: null,
+  participants: [
+    { id: 'user1', name: 'あなた', avatarSettings: null },
+    { id: 'user2', name: 'サンプルユーザー', avatarSettings: null }
+  ],
+  isGroup: false
 };
 
 export const useMessages = () => {

@@ -5,9 +5,10 @@ interface MessageBubbleProps {
   message: Message;
   showAvatar?: boolean;
   showTail?: boolean;
+  isGroupChat?: boolean; // グループチャットかどうか
 }
 
-export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, showAvatar = true, showTail = true }) => {
+export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, showAvatar = true, showTail = true, isGroupChat = false }) => {
   const [formattedTime, setFormattedTime] = useState<string>('');
 
   useEffect(() => {
@@ -22,7 +23,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, showAvata
   }, [message.timestamp]);
 
   return (
-    <div className={`flex ${showAvatar ? 'mb-4' : 'mb-1'} items-start ${message.isUser ? 'justify-end' : 'justify-start'}`}>
+    <div className={`flex mb-1 items-start ${message.isUser ? 'justify-end' : 'justify-start'}`}>
       {!message.isUser && showAvatar && (
         <div className="w-8 h-8 rounded-full bg-gray-300 flex-shrink-0 mr-3 overflow-hidden">
           {message.avatarSettings?.url ? (
@@ -63,14 +64,21 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, showAvata
         </div>
       )}
       
-      <div className={`relative max-w-xs lg:max-w-sm px-3 py-1 text-sm leading-relaxed ${
-        message.isUser 
-          ? 'bg-[#6de67b] text-black rounded-3xl'
-          : 'bg-white text-black rounded-3xl border border-gray-200 shadow-sm'
-      }`}>
-        <div className="whitespace-pre-wrap break-words">
-          {message.text}
-        </div>
+      <div>
+        {/* 相手のメッセージで、グループチャット（3人以上）かつグループの最初の場合は名前を表示 */}
+        {!message.isUser && showAvatar && isGroupChat && (
+          <div className="text-xs text-gray-600 mb-1 ml-1">
+            {message.userName || 'サンプルユーザー'}
+          </div>
+        )}
+        <div className={`relative max-w-xs lg:max-w-sm px-3 py-1 text-sm leading-relaxed ${
+          message.isUser 
+            ? 'bg-[#6de67b] text-black rounded-3xl'
+            : 'bg-white text-black rounded-3xl border border-gray-200 shadow-sm'
+        }`}>
+          <div className="whitespace-pre-wrap break-words">
+            {message.text}
+          </div>
         
         {/* 吹き出しの矢印（showTailがtrueの場合のみ表示） */}
         {!message.isUser && showTail && (
@@ -83,6 +91,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, showAvata
             <div className="w-0 h-0 border-l-[12px] border-l-[#6de67b] border-b-[17px] border-b-transparent"></div>
           </div>
         )}
+        </div>
       </div>
       
       {/* 相手のメッセージの場合、右側に時刻を表示 */}

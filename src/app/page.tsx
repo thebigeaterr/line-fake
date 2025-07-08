@@ -3,16 +3,34 @@
 import { useState, useEffect } from 'react';
 import { ChatRoom } from '@/components/ChatRoom';
 import { AdminPanel } from '@/components/AdminPanel';
-import { useMessages } from '@/hooks/useMessages';
+import { ChatRoomList } from '@/components/ChatRoomList';
+import { NewChatModal } from '@/components/NewChatModal';
+import { useChatRooms } from '@/hooks/useChatRooms';
 
-type ViewMode = 'chat' | 'admin';
+type ViewMode = 'list' | 'chat' | 'admin';
 
 export default function Home() {
-  const [viewMode, setViewMode] = useState<ViewMode>('chat');
-  const { messages, userData, addMessage, updateMessages, updateUserData } = useMessages();
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [showNewChatModal, setShowNewChatModal] = useState(false);
+  const { 
+    chatRooms, 
+    currentRoomId, 
+    setCurrentRoomId, 
+    getCurrentRoom, 
+    createChatRoom, 
+    deleteChatRoom, 
+    addMessage, 
+    updateChatRoom, 
+    resetUnreadCount,
+    clearAllData 
+  } = useChatRooms();
+
+  const currentRoom = getCurrentRoom();
 
   const handleSendMessage = (message: string) => {
-    addMessage(message, true);
+    if (currentRoomId) {
+      addMessage(currentRoomId, message, true);
+    }
   };
 
   const handleMenuClick = () => {
@@ -21,6 +39,32 @@ export default function Home() {
 
   const handleBackToChat = () => {
     setViewMode('chat');
+  };
+
+  const handleBackToList = () => {
+    setViewMode('list');
+    setCurrentRoomId(null);
+  };
+
+  const handleSelectRoom = (roomId: string) => {
+    setCurrentRoomId(roomId);
+    resetUnreadCount(roomId);
+    setViewMode('chat');
+  };
+
+  const handleCreateRoom = () => {
+    setShowNewChatModal(true);
+  };
+
+  const handleConfirmCreateRoom = (name: string, isGroup: boolean) => {
+    const newRoomId = createChatRoom(name, isGroup);
+    setCurrentRoomId(newRoomId);
+    setShowNewChatModal(false);
+    setViewMode('chat');
+  };
+
+  const handleDeleteRoom = (roomId: string) => {
+    deleteChatRoom(roomId);
   };
 
   // 画面切り替え時にスクロール位置をリセット
@@ -38,52 +82,58 @@ export default function Home() {
   }, [viewMode]);
 
   const handleUpdateMessages = (newMessages: any[], updatedUserData?: any) => {
-    updateMessages(newMessages);
-    
-    // ユーザーデータが渡された場合は更新
-    if (updatedUserData) {
-      updateUserData(updatedUserData);
-    } else {
-      // メッセージから相手の名前とアバター設定を抽出
-      const firstOtherMessage = newMessages.find(msg => !msg.isUser);
-      if (firstOtherMessage) {
-        const newUserData: any = {};
-        if (firstOtherMessage.userName && firstOtherMessage.userName !== userData.otherUserName) {
-          newUserData.otherUserName = firstOtherMessage.userName;
-        }
-        if (firstOtherMessage.avatarSettings && firstOtherMessage.avatarSettings !== userData.otherAvatarSettings) {
-          newUserData.otherAvatarSettings = firstOtherMessage.avatarSettings;
-        }
-        if (Object.keys(newUserData).length > 0) {
-          updateUserData(newUserData);
-        }
-      }
+    if (currentRoomId) {
+      updateChatRoom(currentRoomId, newMessages, updatedUserData);
     }
   };
 
-  console.log('App userData:', userData); // デバッグ用
-
   return (
     <div className="w-full max-w-md mx-auto bg-[#7494c0] shadow-2xl h-screen overflow-hidden">
-      {viewMode === 'chat' ? (
+      {viewMode === 'list' ? (
+        <div className="h-full">
+          <ChatRoomList
+            chatRooms={chatRooms}
+            onSelectRoom={handleSelectRoom}
+            onCreateRoom={handleCreateRoom}
+            onDeleteRoom={handleDeleteRoom}
+            onClearAllData={clearAllData}
+          />
+        </div>
+      ) : viewMode === 'chat' && currentRoom ? (
         <div className="chat-slide-in h-full">
           <ChatRoom
-            roomName={userData?.otherUserName || 'サンプルユーザー'}
-            roomAvatarSettings={userData?.otherAvatarSettings}
-            messages={messages}
+            roomName={currentRoom.name}
+            roomAvatarSettings={currentRoom.participants[1]?.avatarSettings}
+            messages={currentRoom.messages}
             onSendMessage={handleSendMessage}
-            onBack={() => console.log('Back pressed')}
+            onBack={handleBackToList}
             onMenuClick={handleMenuClick}
+            isGroupChat={currentRoom.isGroup && currentRoom.participants.length >= 3}
           />
         </div>
-      ) : (
+      ) : viewMode === 'admin' && currentRoom ? (
         <div className="admin-panel-slide-in h-full">
           <AdminPanel
-            messages={messages}
+            messages={currentRoom.messages}
             onUpdateMessages={handleUpdateMessages}
             onBack={handleBackToChat}
+            initialUserData={{
+              otherUserName: currentRoom.participants[1]?.name || 'ユーザー',
+              otherAvatarSettings: currentRoom.participants[1]?.avatarSettings,
+              userAvatarSettings: currentRoom.participants[0]?.avatarSettings,
+              participants: currentRoom.participants,
+              isGroup: currentRoom.isGroup
+            }}
           />
         </div>
+      ) : null}
+
+      {/* New Chat Modal */}
+      {showNewChatModal && (
+        <NewChatModal
+          onClose={() => setShowNewChatModal(false)}
+          onCreate={handleConfirmCreateRoom}
+        />
       )}
     </div>
   );

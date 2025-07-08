@@ -12,6 +12,7 @@ interface ChatRoomProps {
   onSendMessage: (message: string) => void;
   onBack: () => void;
   onMenuClick?: () => void;
+  isGroupChat?: boolean;
 }
 
 export const ChatRoom: React.FC<ChatRoomProps> = ({
@@ -21,7 +22,8 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
   messages,
   onSendMessage,
   onBack,
-  onMenuClick
+  onMenuClick,
+  isGroupChat = false
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -108,6 +110,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
             message={message} 
             showAvatar={shouldShowAvatar(index)}
             showTail={shouldShowTail(index)}
+            isGroupChat={isGroupChat}
           />
         ))}
         <div ref={messagesEndRef} style={{ height: '1px' }} />
