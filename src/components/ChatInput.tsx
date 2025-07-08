@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { IoSend } from 'react-icons/io5';
-import { AiOutlinePlus } from 'react-icons/ai';
+import { IoSend, IoAdd, IoCamera, IoImage, IoMic } from 'react-icons/io5';
 import { BsEmojiSmile } from 'react-icons/bs';
 
 interface ChatInputProps {
@@ -27,52 +26,85 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, disabled = 
   };
 
   return (
-    <div className="bg-white border-t border-gray-300 px-3 py-2">
-      <form onSubmit={handleSubmit} className="flex items-end space-x-2">
-        <button
-          type="button"
-          className="flex-shrink-0 p-2 text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-100"
-          disabled={disabled}
-        >
-          <AiOutlinePlus size={22} />
-        </button>
-        
-        <div className="flex-1 relative">
-          <textarea
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="メッセージを入力"
-            className="w-full px-4 py-3 border border-gray-300 rounded-3xl resize-none focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 bg-gray-50"
-            rows={1}
-            disabled={disabled}
-            style={{ 
-              minHeight: '44px', 
-              maxHeight: '120px',
-              lineHeight: '1.4'
-            }}
-          />
+    <div className="bg-white px-2 py-2">
+      <div className="flex items-center justify-between w-full max-w-md mx-auto">
+        {/* Left side icons */}
+        <div className="flex items-center space-x-1">
           <button
             type="button"
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 p-1 rounded-full hover:bg-gray-200"
+            className="flex-shrink-0 p-2 text-gray-600 hover:text-gray-800"
+            disabled={disabled}
+          >
+            <IoAdd size={22} />
+          </button>
+          
+          <button
+            type="button"
+            className="flex-shrink-0 p-2 text-gray-600 hover:text-gray-800"
+            disabled={disabled}
+          >
+            <IoCamera size={22} />
+          </button>
+          
+          <button
+            type="button"
+            className="flex-shrink-0 p-2 text-gray-600 hover:text-gray-800"
+            disabled={disabled}
+          >
+            <IoImage size={22} />
+          </button>
+        </div>
+        
+        {/* Center input area */}
+        <div className="flex-1 mx-2 flex items-center bg-gray-100 rounded-3xl px-3 py-2">
+          <span className="text-gray-500 text-sm mr-2">Aa</span>
+          <form onSubmit={handleSubmit} className="flex-1">
+            <textarea
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder=""
+              className="w-full bg-transparent resize-none focus:outline-none text-base"
+              rows={1}
+              disabled={disabled}
+              style={{ 
+                minHeight: '24px', 
+                maxHeight: '120px',
+                lineHeight: '1.4'
+              }}
+            />
+          </form>
+          <button
+            type="button"
+            className="text-gray-500 hover:text-gray-700 ml-2"
             disabled={disabled}
           >
             <BsEmojiSmile size={18} />
           </button>
         </div>
         
-        <button
-          type="submit"
-          className={`flex-shrink-0 p-2.5 rounded-full transition-all ${
-            message.trim() && !disabled
-              ? 'bg-blue-500 text-white hover:bg-blue-600 shadow-md'
-              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-          }`}
-          disabled={!message.trim() || disabled}
-        >
-          <IoSend size={18} />
-        </button>
-      </form>
+        {/* Right side icon */}
+        <div className="flex-shrink-0">
+          {message.trim() ? (
+            <button
+              type="submit"
+              onClick={handleSubmit}
+              className="p-2 text-blue-500 hover:text-blue-600"
+              disabled={disabled}
+            >
+              <IoSend size={22} />
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="p-2 text-gray-600 hover:text-gray-800"
+              disabled={disabled}
+            >
+              <IoMic size={22} />
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

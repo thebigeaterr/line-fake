@@ -1,5 +1,5 @@
 import React from 'react';
-import { IoCall, IoVideocam, IoMenu, IoChevronBack } from 'react-icons/io5';
+import { IoCall, IoMenu, IoChevronBack, IoSearch } from 'react-icons/io5';
 import { AvatarSettings } from '@/types/message';
 
 interface ChatHeaderProps {
@@ -32,12 +32,12 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
         </div>
       </div>
       
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center space-x-1">
         <button className="p-2 text-black hover:text-gray-600">
-          <IoCall size={20} />
+          <IoSearch size={20} />
         </button>
         <button className="p-2 text-black hover:text-gray-600">
-          <IoVideocam size={20} />
+          <IoCall size={20} />
         </button>
         <button 
           onClick={onMenuClick}

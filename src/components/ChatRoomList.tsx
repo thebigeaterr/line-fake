@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { IoAdd, IoTrash, IoPeople, IoPerson } from 'react-icons/io5';
 import { Message } from '@/types/message';
 
@@ -33,6 +33,11 @@ export const ChatRoomList: React.FC<ChatRoomListProps> = ({
   onClearAllData
 }) => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const formatTime = (date?: Date) => {
     if (!date) return '';
@@ -140,7 +145,7 @@ export const ChatRoomList: React.FC<ChatRoomListProps> = ({
                       {room.name}
                     </h3>
                     <span className="text-xs text-gray-500 ml-2">
-                      {formatTime(room.lastMessageTime)}
+                      {isClient ? formatTime(room.lastMessageTime) : ''}
                     </span>
                   </div>
                   <p className="text-sm text-gray-600 truncate">
