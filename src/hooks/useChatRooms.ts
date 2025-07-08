@@ -42,8 +42,9 @@ const defaultChatRoom: ChatRoomData = {
 };
 
 export const useChatRooms = () => {
-  const [chatRooms, setChatRooms] = useState<ChatRoomData[]>([defaultChatRoom]);
+  const [chatRooms, setChatRooms] = useState<ChatRoomData[]>([]);
   const [currentRoomId, setCurrentRoomId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   // サーバーからデータを読み込む
   const loadDataFromServer = async () => {
@@ -61,6 +62,9 @@ export const useChatRooms = () => {
           }))
         }));
         setChatRooms(restoredData);
+      } else {
+        // サーバーからデータが取得できなかった場合はデフォルトデータを使用
+        setChatRooms([defaultChatRoom]);
       }
     } catch (error) {
       console.error('Failed to load chat data from server:', error);
@@ -80,9 +84,14 @@ export const useChatRooms = () => {
           setChatRooms(restoredData);
         } catch (error) {
           console.error('Failed to parse saved chat rooms:', error);
+          setChatRooms([defaultChatRoom]);
         }
+      } else {
+        // ローカルストレージにもデータがない場合
+        setChatRooms([defaultChatRoom]);
       }
     }
+    setIsLoading(false);
   };
 
   useEffect(() => {
@@ -228,6 +237,7 @@ export const useChatRooms = () => {
 
   // チャットルームを更新（管理画面から）
   const updateChatRoom = (roomId: string, messages: Message[], userData?: Record<string, unknown>) => {
+    console.log('updateChatRoom called with:', { roomId, userData });
     const updatedRooms = chatRooms.map(room => {
       if (room.id === roomId) {
         const lastMsg = messages[messages.length - 1];
@@ -320,6 +330,7 @@ export const useChatRooms = () => {
     addMessage,
     updateChatRoom,
     resetUnreadCount,
-    clearAllData
+    clearAllData,
+    isLoading
   };
 };
