@@ -36,7 +36,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
       
       <div className="flex items-center space-x-1">
         <button className="p-2 text-black hover:text-gray-600">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <svg width="19.5" height="19.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
             <circle cx="11" cy="11" r="8"/>
             <path d="m21 21-4.35-4.35"/>
             <path d="M11 11v-4"/>

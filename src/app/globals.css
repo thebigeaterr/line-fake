@@ -159,3 +159,24 @@ body {
     transform: translateX(0);
   }
 }
+
+/* Next.js development indicators を完全に非表示 */
+[data-nextjs-toast-errors] {
+  display: none !important;
+}
+
+.__next-dev-overlay-backdrop {
+  display: none !important;
+}
+
+div[data-nextjs-toast] {
+  display: none !important;
+}
+
+div[id*="__next"] div[style*="position: fixed"][style*="bottom"][style*="right"] {
+  display: none !important;
+}
+
+div[style*="position: fixed"][style*="z-index: 9000"] {
+  display: none !important;
+}
