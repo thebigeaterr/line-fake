@@ -31,11 +31,21 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, disabled = 
       <div className="flex items-center justify-between w-full max-w-md mx-auto">
         {/* Left side icons */}
         <div className="flex items-center space-x-3">
-          <HiOutlinePlus size={28} strokeWidth={1.3} className="text-gray-600" />
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" className="text-gray-600">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
           
-          <HiOutlineCamera size={28} strokeWidth={1.3} className="text-gray-600" />
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" className="text-gray-600">
+            <rect x="3" y="6" width="18" height="12" rx="2"/>
+            <rect x="8" y="3" width="8" height="3" rx="1"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
           
-          <HiOutlinePhotograph size={28} strokeWidth={1.3} className="text-gray-600" />
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" className="text-gray-600">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <path d="M3 13l5-4 5 6 4-3 4 4"/>
+          </svg>
         </div>
         
         {/* Center input area */}
@@ -70,7 +80,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, disabled = 
           {message.trim() ? (
             <IoSend size={22} className="text-blue-500" onClick={handleSubmit} />
           ) : (
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" className="text-gray-600">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" className="text-gray-600">
               <rect x="9" y="3" width="6" height="11" rx="3"/>
               <path d="M5 11c0 3.9 3.1 7 7 7s7-3.1 7-7"/>
               <path d="M12 18v3"/>
