@@ -116,13 +116,13 @@ export async function POST(request: NextRequest) {
     console.log('JSON size:', jsonString.length, 'bytes');
     
     // アバターデータを除外して保存
-    const cleanData = data.map((room: any) => ({
+    const cleanData = data.map((room: Record<string, unknown>) => ({
       ...room,
-      messages: room.messages?.map((msg: any) => ({
+      messages: (room.messages as Record<string, unknown>[])?.map((msg: Record<string, unknown>) => ({
         ...msg,
         avatarSettings: msg.avatarSettings ? {
-          ...msg.avatarSettings,
-          url: msg.avatarSettings.url ? '[LARGE_IMAGE_DATA]' : null
+          ...(msg.avatarSettings as Record<string, unknown>),
+          url: (msg.avatarSettings as Record<string, unknown>)?.url ? '[LARGE_IMAGE_DATA]' : null
         } : null
       }))
     }));
