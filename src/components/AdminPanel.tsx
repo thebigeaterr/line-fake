@@ -169,7 +169,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     setShowAvatarEditor(true);
   };
 
-  const handleSaveAvatarSettings = (settings: AvatarSettings | null) => {
+  const handleSaveAvatarSettings = async (settings: AvatarSettings | null) => {
     let updatedMessages = editingMessages;
     
     if (editingAvatarFor === 'user') {
@@ -187,6 +187,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       );
       saveChangesLocally(updatedMessages);
     }
+    
+    // アバター設定を即座に保存
+    await saveChangesToParent();
   };
 
   const formatDateTimeForInput = (date: Date) => {

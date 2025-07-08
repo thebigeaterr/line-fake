@@ -265,44 +265,44 @@ export const useChatRooms = () => {
         if (userData) {
           console.log('Updating participants with userData:', userData);
           // 参加者情報のコピーを作成
-          const updatedParticipants = [...updatedRoom.participants];
+          let updatedParticipants = [...updatedRoom.participants];
           console.log('Current participants:', updatedParticipants);
           
-          if (userData.participants) {
-            updatedRoom.participants = userData.participants as Array<{id: string; name: string; avatarSettings: AvatarSettings | null}>;
-            console.log('Set participants from userData.participants:', updatedRoom.participants);
-            console.log('Participant[1] avatar after update:', updatedRoom.participants[1]?.avatarSettings);
-          } else {
-            // 個別の更新の場合
-            if (!userData.isGroup && userData.otherUserName) {
-              // 1対1チャットの場合、2人目の参加者の名前を更新
-              if (updatedParticipants[1]) {
-                updatedParticipants[1] = {
-                  ...updatedParticipants[1],
-                  name: userData.otherUserName as string
-                };
-                console.log('Updated participant[1] name:', updatedParticipants[1]);
-              }
-            }
-            
-            // アバター設定を更新
-            if (userData.otherAvatarSettings !== undefined && updatedParticipants[1]) {
+          // まず個別のアバター設定と名前を更新
+          if (!userData.isGroup && userData.otherUserName) {
+            // 1対1チャットの場合、2人目の参加者の名前を更新
+            if (updatedParticipants[1]) {
               updatedParticipants[1] = {
                 ...updatedParticipants[1],
-                avatarSettings: userData.otherAvatarSettings as AvatarSettings | null
+                name: userData.otherUserName as string
               };
-              console.log('Updated participant[1] avatar:', updatedParticipants[1]);
+              console.log('Updated participant[1] name:', updatedParticipants[1]);
             }
-            if (userData.userAvatarSettings !== undefined && updatedParticipants[0]) {
-              updatedParticipants[0] = {
-                ...updatedParticipants[0],
-                avatarSettings: userData.userAvatarSettings as AvatarSettings | null
-              };
-              console.log('Updated participant[0] avatar:', updatedParticipants[0]);
-            }
-            
-            updatedRoom.participants = updatedParticipants;
           }
+          
+          // アバター設定を更新
+          if (userData.otherAvatarSettings !== undefined && updatedParticipants[1]) {
+            updatedParticipants[1] = {
+              ...updatedParticipants[1],
+              avatarSettings: userData.otherAvatarSettings as AvatarSettings | null
+            };
+            console.log('Updated participant[1] avatar:', updatedParticipants[1]);
+          }
+          if (userData.userAvatarSettings !== undefined && updatedParticipants[0]) {
+            updatedParticipants[0] = {
+              ...updatedParticipants[0],
+              avatarSettings: userData.userAvatarSettings as AvatarSettings | null
+            };
+            console.log('Updated participant[0] avatar:', updatedParticipants[0]);
+          }
+          
+          // 最後に完全なparticipants配列で上書きする場合のみ置き換え
+          if (userData.participants) {
+            updatedParticipants = userData.participants as Array<{id: string; name: string; avatarSettings: AvatarSettings | null}>;
+            console.log('Overridden with userData.participants:', updatedParticipants);
+          }
+          
+          updatedRoom.participants = updatedParticipants;
           
           console.log('Final updated participants:', updatedRoom.participants);
         }
