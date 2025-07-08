@@ -45,14 +45,14 @@ export const useChatRooms = () => {
   const [chatRooms, setChatRooms] = useState<ChatRoomData[]>([defaultChatRoom]);
   const [currentRoomId, setCurrentRoomId] = useState<string | null>(null);
 
-  // localStorageからデータを読み込む
-  useEffect(() => {
-    const savedData = localStorage.getItem(STORAGE_KEY);
-    if (savedData) {
-      try {
-        const parsedData = JSON.parse(savedData);
+  // サーバーからデータを読み込む
+  const loadDataFromServer = async () => {
+    try {
+      const response = await fetch('/api/chat-data');
+      if (response.ok) {
+        const data = await response.json();
         // 日付を復元
-        const restoredData = parsedData.map((room: any) => ({
+        const restoredData = data.map((room: any) => ({
           ...room,
           lastMessageTime: room.lastMessageTime ? new Date(room.lastMessageTime) : undefined,
           messages: room.messages.map((msg: any) => ({
@@ -61,67 +61,98 @@ export const useChatRooms = () => {
           }))
         }));
         setChatRooms(restoredData);
-      } catch (error) {
-        console.error('Failed to parse saved chat rooms:', error);
+      }
+    } catch (error) {
+      console.error('Failed to load chat data from server:', error);
+      // フォールバックとしてlocalStorageを使用
+      const savedData = localStorage.getItem(STORAGE_KEY);
+      if (savedData) {
+        try {
+          const parsedData = JSON.parse(savedData);
+          const restoredData = parsedData.map((room: any) => ({
+            ...room,
+            lastMessageTime: room.lastMessageTime ? new Date(room.lastMessageTime) : undefined,
+            messages: room.messages.map((msg: any) => ({
+              ...msg,
+              timestamp: new Date(msg.timestamp)
+            }))
+          }));
+          setChatRooms(restoredData);
+        } catch (error) {
+          console.error('Failed to parse saved chat rooms:', error);
+        }
       }
     }
+  };
+
+  useEffect(() => {
+    loadDataFromServer();
   }, []);
 
-  // データをlocalStorageに保存
-  const saveChatRooms = (rooms: ChatRoomData[]) => {
+  // 自動保存: 2分ごとに定期保存
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (chatRooms.length > 0) {
+        saveChatRooms(chatRooms);
+        console.log('Auto-saved chat data');
+      }
+    }, 120000); // 2分ごと
+
+    return () => clearInterval(interval);
+  }, [chatRooms]);
+
+  // 自動保存: ページ離脱時に保存
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (chatRooms.length > 0) {
+        // 同期的な保存（ページ離脱時）
+        navigator.sendBeacon('/api/chat-data', JSON.stringify(chatRooms));
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden' && chatRooms.length > 0) {
+        saveChatRooms(chatRooms);
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [chatRooms]);
+
+  // データをサーバーに保存
+  const saveChatRooms = async (rooms: ChatRoomData[]) => {
     try {
-      // 既存のlocalStorageをクリア（他のキーも含む）
-      const keysToKeep = ['line-fake-chatrooms'];
-      const allKeys = Object.keys(localStorage);
-      allKeys.forEach(key => {
-        if (!keysToKeep.includes(key)) {
-          localStorage.removeItem(key);
-        }
+      const response = await fetch('/api/chat-data', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(rooms),
       });
 
-      // 古いメッセージを大幅に制限して容量を節約
-      const limitedRooms = rooms.map(room => ({
-        ...room,
-        messages: room.messages.slice(-10) // 最新10件のみ保持
-      }));
-      
-      const dataToSave = JSON.stringify(limitedRooms);
-      
-      // データサイズをチェック
-      const sizeInKB = new Blob([dataToSave]).size / 1024;
-      console.log(`Data size: ${sizeInKB.toFixed(2)} KB`);
-      
-      localStorage.setItem(STORAGE_KEY, dataToSave);
-      setChatRooms(rooms);
+      if (response.ok) {
+        setChatRooms(rooms);
+        // バックアップとしてlocalStorageにも保存
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(rooms));
+      } else {
+        throw new Error('Failed to save to server');
+      }
     } catch (error) {
-      console.error('Failed to save to localStorage:', error);
-      
-      // 容量エラーの場合、さらに削減
-      if (error instanceof DOMException && error.code === 22) {
-        try {
-          // 最新5件のみ保持してリトライ
-          const reducedRooms = rooms.map(room => ({
-            ...room,
-            messages: room.messages.slice(-5)
-          }));
-          
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(reducedRooms));
-          setChatRooms(rooms);
-          alert('データが多すぎるため、古いメッセージを大幅に削除しました（最新5件のみ保持）。');
-        } catch (retryError) {
-          console.error('Failed to save even with heavily reduced data:', retryError);
-          // 最終手段：localStorageを完全にクリア
-          try {
-            localStorage.clear();
-            const defaultData = [defaultChatRoom];
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultData));
-            setChatRooms(defaultData);
-            alert('localStorageを完全にクリアしました。デフォルトデータで再開します。');
-          } catch (finalError) {
-            console.error('Complete localStorage clear failed:', finalError);
-            alert('データの保存ができません。ブラウザの設定を確認してください。');
-          }
-        }
+      console.error('Failed to save to server:', error);
+      // フォールバックとしてlocalStorageに保存
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(rooms));
+        setChatRooms(rooms);
+        console.log('Saved to localStorage as fallback');
+      } catch (localError) {
+        console.error('Failed to save to localStorage:', localError);
+        alert('データの保存に失敗しました。');
       }
     }
   };

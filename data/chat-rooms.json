@@ -1,0 +1,46 @@
+[
+  {
+    "id": "room1",
+    "name": "サンプルユーザー",
+    "lastMessage": "はい、元気です！今日はいい天気ですね。",
+    "lastMessageTime": "2025-07-08T14:31:08.859Z",
+    "unreadCount": 0,
+    "isGroup": false,
+    "participants": [
+      {
+        "id": "user1",
+        "name": "あなた",
+        "avatarSettings": null
+      },
+      {
+        "id": "user2",
+        "name": "サンプルユーザー",
+        "avatarSettings": null
+      }
+    ],
+    "messages": [
+      {
+        "id": "1",
+        "text": "こんにちは！",
+        "isUser": false,
+        "timestamp": "2025-07-08T14:30:38.859Z",
+        "userName": "サンプルユーザー"
+      },
+      {
+        "id": "2",
+        "text": "こんにちは！元気ですか？",
+        "isUser": true,
+        "timestamp": "2025-07-08T14:30:48.859Z",
+        "userName": "あなた",
+        "isRead": true
+      },
+      {
+        "id": "3",
+        "text": "はい、元気です！今日はいい天気ですね。",
+        "isUser": false,
+        "timestamp": "2025-07-08T14:30:58.859Z",
+        "userName": "サンプルユーザー"
+      }
+    ]
+  }
+]
