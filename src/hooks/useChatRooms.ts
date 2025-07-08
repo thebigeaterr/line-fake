@@ -136,6 +136,7 @@ export const useChatRooms = () => {
 
   // データをサーバーに保存
   const saveChatRooms = async (rooms: ChatRoomData[]) => {
+    console.log('saveChatRooms called with:', rooms.length, 'rooms');
     try {
       const response = await fetch('/api/chat-data', {
         method: 'POST',
@@ -146,7 +147,7 @@ export const useChatRooms = () => {
       });
 
       if (response.ok) {
-        setChatRooms(rooms);
+        console.log('Data saved to server successfully');
         // バックアップとしてlocalStorageにも保存
         localStorage.setItem(STORAGE_KEY, JSON.stringify(rooms));
       } else {
@@ -157,7 +158,6 @@ export const useChatRooms = () => {
       // フォールバックとしてlocalStorageに保存
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(rooms));
-        setChatRooms(rooms);
         console.log('Saved to localStorage as fallback');
       } catch (localError) {
         console.error('Failed to save to localStorage:', localError);
@@ -192,6 +192,7 @@ export const useChatRooms = () => {
     };
     
     const updatedRooms = [...chatRooms, newRoom];
+    setChatRooms(updatedRooms);
     saveChatRooms(updatedRooms);
     return newRoom.id;
   };
@@ -199,6 +200,7 @@ export const useChatRooms = () => {
   // チャットルームを削除
   const deleteChatRoom = (roomId: string) => {
     const updatedRooms = chatRooms.filter(room => room.id !== roomId);
+    setChatRooms(updatedRooms);
     saveChatRooms(updatedRooms);
     if (currentRoomId === roomId) {
       setCurrentRoomId(null);
@@ -232,6 +234,7 @@ export const useChatRooms = () => {
       return room;
     });
     
+    setChatRooms(updatedRooms);
     saveChatRooms(updatedRooms);
   };
 
@@ -295,6 +298,10 @@ export const useChatRooms = () => {
       return room;
     });
     
+    console.log('updateChatRoom: setting state and saving');
+    // 即座に状態を更新
+    setChatRooms(updatedRooms);
+    // 非同期で保存（awaitしない）
     saveChatRooms(updatedRooms);
   };
 
@@ -306,6 +313,7 @@ export const useChatRooms = () => {
       }
       return room;
     });
+    setChatRooms(updatedRooms);
     saveChatRooms(updatedRooms);
   };
 
