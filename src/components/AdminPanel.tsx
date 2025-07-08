@@ -18,11 +18,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   initialUserData
 }) => {
   const [editingMessages, setEditingMessages] = useState<Message[]>([]);
-  const [newMessage, setNewMessage] = useState('');
-  const [newMessageIsUser, setNewMessageIsUser] = useState(false);
-  const [newMessageTimestamp, setNewMessageTimestamp] = useState('');
-  const [newMessageUserId, setNewMessageUserId] = useState<string | null>(null);
-  const [showAdvancedAdd, setShowAdvancedAdd] = useState(true);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState('');
   const [editingTimestamp, setEditingTimestamp] = useState('');
@@ -39,12 +34,15 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // 既存のメッセージで自分のメッセージに既読状態がない場合は既読に設定
-    const messagesWithReadStatus = messages.map(msg => ({
-      ...msg,
-      isRead: msg.isUser && msg.isRead === undefined ? true : msg.isRead
-    }));
-    setEditingMessages(messagesWithReadStatus);
+    // editingMessagesが空の場合のみ初期化
+    if (editingMessages.length === 0) {
+      // 既存のメッセージで自分のメッセージに既読状態がない場合は既読に設定
+      const messagesWithReadStatus = messages.map(msg => ({
+        ...msg,
+        isRead: msg.isUser && msg.isRead === undefined ? true : msg.isRead
+      }));
+      setEditingMessages(messagesWithReadStatus);
+    }
     
     // メッセージから現在のユーザーデータを抽出
     const firstOtherMessage = messages.find(msg => !msg.isUser);
@@ -72,7 +70,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         setIsGroupChat(initialUserData.isGroup);
       }
     }
-  }, [messages, initialUserData]);
+  }, [messages, initialUserData, editingMessages.length]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -82,43 +80,53 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     return () => clearTimeout(timer);
   }, [editingMessages]);
 
-  const handleAddMessage = () => {
-    if (newMessage.trim()) {
-      const timestamp = newMessageTimestamp 
-        ? new Date(newMessageTimestamp) 
-        : new Date();
-        
-      let userName = newMessageIsUser ? 'あなた' : otherUserName;
-      let avatarSettings = newMessageIsUser ? userAvatarSettings : otherAvatarSettings;
-      let userId = newMessageIsUser ? 'user1' : 'user2';
-      
-      // グループチャットの場合、選択された参加者の情報を使用
-      if (isGroupChat && newMessageUserId) {
-        const selectedParticipant = participants.find(p => p.id === newMessageUserId);
-        if (selectedParticipant) {
-          userName = selectedParticipant.name;
-          avatarSettings = selectedParticipant.avatarSettings;
-          userId = selectedParticipant.id;
-        }
-      }
-        
-      const message: Message = {
-        id: Date.now().toString(),
-        text: newMessage.trim(),
-        isUser: newMessageIsUser,
-        timestamp: timestamp,
-        userName: userName,
-        avatarSettings: avatarSettings,
-        isRead: newMessageIsUser ? true : undefined,
-        userId: userId
-      };
-      
-      setEditingMessages([...editingMessages, message]);
-      setNewMessage('');
-      setNewMessageTimestamp('');
-      setNewMessageUserId(null);
-      setShowAdvancedAdd(false);
-    }
+  // 共通の保存関数
+  const saveChangesToParent = (updatedMessages: Message[]) => {
+    // グループチャットでない場合は、相手の名前を全メッセージに反映
+    const finalMessages = isGroupChat ? updatedMessages : updatedMessages.map(msg => 
+      !msg.isUser ? { ...msg, userName: otherUserName } : msg
+    );
+    
+    // ユーザーデータも同時に保存
+    const updatedUserData = {
+      otherUserName: otherUserName,
+      otherAvatarSettings: otherAvatarSettings,
+      userAvatarSettings: userAvatarSettings,
+      participants: participants,
+      isGroup: isGroupChat
+    };
+    
+    onUpdateMessages(finalMessages, updatedUserData);
+  };
+
+  const handleInsertMessage = (afterIndex: number) => {
+    const timestamp = new Date();
+    const message: Message = {
+      id: Date.now().toString(),
+      text: '新しいメッセージ',
+      isUser: true,
+      timestamp: timestamp,
+      userName: 'あなた',
+      avatarSettings: userAvatarSettings,
+      isRead: true,
+      userId: 'user1'
+    };
+    
+    const newMessages = [...editingMessages];
+    // -1の場合は最初に挿入、それ以外は指定されたインデックスの後に挿入
+    const insertIndex = afterIndex === -1 ? 0 : afterIndex + 1;
+    newMessages.splice(insertIndex, 0, message);
+    setEditingMessages(newMessages);
+    
+    // 即時保存
+    saveChangesToParent(newMessages);
+    
+    // 新規追加されたメッセージを編集モードにする
+    setTimeout(() => {
+      setEditingMessageId(message.id);
+      setEditingText(message.text);
+      setEditingTimestamp(formatDateTimeForInput(message.timestamp));
+    }, 100);
   };
 
   const handleOpenAvatarEditor = (forUser: 'user' | 'other') => {
@@ -127,19 +135,26 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   };
 
   const handleSaveAvatarSettings = (settings: AvatarSettings | null) => {
+    let updatedMessages = editingMessages;
+    
     if (editingAvatarFor === 'user') {
       setUserAvatarSettings(settings);
       // 既存の自分のメッセージにも適用
-      setEditingMessages(editingMessages.map(msg => 
+      updatedMessages = editingMessages.map(msg => 
         msg.isUser ? { ...msg, avatarSettings: settings } : msg
-      ));
+      );
+      setEditingMessages(updatedMessages);
     } else if (editingAvatarFor === 'other') {
       setOtherAvatarSettings(settings);
       // 既存の相手のメッセージにも適用
-      setEditingMessages(editingMessages.map(msg => 
+      updatedMessages = editingMessages.map(msg => 
         !msg.isUser ? { ...msg, avatarSettings: settings, userName: otherUserName } : msg
-      ));
+      );
+      setEditingMessages(updatedMessages);
     }
+    
+    // 即時保存
+    saveChangesToParent(updatedMessages);
   };
 
   const formatDateTimeForInput = (date: Date) => {
@@ -160,16 +175,20 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const handleSaveEdit = () => {
     if (editingMessageId) {
       const newTimestamp = new Date(editingTimestamp);
-      setEditingMessages(editingMessages.map(msg => 
+      const updatedMessages = editingMessages.map(msg => 
         msg.id === editingMessageId ? { 
           ...msg, 
           text: editingText,
           timestamp: newTimestamp
         } : msg
-      ));
+      );
+      setEditingMessages(updatedMessages);
       setEditingMessageId(null);
       setEditingText('');
       setEditingTimestamp('');
+      
+      // 即時保存
+      saveChangesToParent(updatedMessages);
     }
   };
 
@@ -180,52 +199,56 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   };
 
   const handleDeleteMessage = (id: string) => {
-    setEditingMessages(editingMessages.filter(msg => msg.id !== id));
+    const updatedMessages = editingMessages.filter(msg => msg.id !== id);
+    setEditingMessages(updatedMessages);
+    
+    // 即時保存
+    saveChangesToParent(updatedMessages);
   };
 
   const handleToggleMessageType = (id: string) => {
-    setEditingMessages(editingMessages.map(msg => 
-      msg.id === id ? { 
-        ...msg, 
-        isUser: !msg.isUser,
-        isRead: !msg.isUser ? true : undefined // ユーザーメッセージに変更時は既読にリセット
-      } : msg
-    ));
+    const updatedMessages = editingMessages.map(msg => {
+      if (msg.id === id) {
+        const newIsUser = !msg.isUser;
+        return {
+          ...msg, 
+          isUser: newIsUser,
+          isRead: newIsUser ? true : undefined, // ユーザーメッセージに変更時は既読にリセット
+          userName: newIsUser ? 'あなた' : otherUserName,
+          avatarSettings: newIsUser ? userAvatarSettings : otherAvatarSettings,
+          userId: newIsUser ? 'user1' : 'user2'
+        };
+      }
+      return msg;
+    });
+    setEditingMessages(updatedMessages);
+    
+    // 即時保存
+    saveChangesToParent(updatedMessages);
   };
 
   const handleToggleReadStatus = (id: string) => {
-    setEditingMessages(editingMessages.map(msg => 
+    const updatedMessages = editingMessages.map(msg => 
       msg.id === id && msg.isUser ? { ...msg, isRead: !msg.isRead } : msg
-    ));
+    );
+    setEditingMessages(updatedMessages);
+    
+    // 即時保存
+    saveChangesToParent(updatedMessages);
   };
 
-  const handleSaveChanges = () => {
-    // グループチャットでない場合は、相手の名前を全メッセージに反映
-    const updatedMessages = isGroupChat ? editingMessages : editingMessages.map(msg => 
-      !msg.isUser ? { ...msg, userName: otherUserName } : msg
-    );
-    
-    // ユーザーデータも同時に保存
-    const updatedUserData = {
-      otherUserName: otherUserName,
-      otherAvatarSettings: otherAvatarSettings,
-      userAvatarSettings: userAvatarSettings,
-      participants: participants,
-      isGroup: isGroupChat
-    };
-    
-    console.log('Saving user data:', updatedUserData); // デバッグ用
-    onUpdateMessages(updatedMessages, updatedUserData);
-    alert('変更を保存しました！');
-  };
 
   const handleNameChange = (newName: string) => {
     setOtherUserName(newName);
     // 既存の相手のメッセージの名前も更新
-    setEditingMessages(editingMessages.map(msg => 
+    const updatedMessages = editingMessages.map(msg => 
       !msg.isUser ? { ...msg, userName: newName } : msg
-    ));
+    );
+    setEditingMessages(updatedMessages);
     setShowNameEditor(false);
+    
+    // 即時保存
+    saveChangesToParent(updatedMessages);
   };
 
   // メッセージのグループ化判定
@@ -289,43 +312,81 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           <button
             onClick={() => {
               // 全ての自分のメッセージを既読に
-              setEditingMessages(editingMessages.map(msg => ({
+              const updatedMessages = editingMessages.map(msg => ({
                 ...msg,
                 isRead: msg.isUser ? true : msg.isRead
-              })));
+              }));
+              setEditingMessages(updatedMessages);
+              // 即時保存
+              saveChangesToParent(updatedMessages);
             }}
             className="bg-purple-500 text-white px-3 py-2 rounded-lg hover:bg-purple-600 flex items-center space-x-1 text-sm"
           >
             <span>全既読</span>
-          </button>
-          <button
-            onClick={handleSaveChanges}
-            className="bg-[#06C755] text-white px-3 py-2 rounded-lg hover:bg-[#05B04B] flex items-center space-x-1 text-sm"
-          >
-            <IoSend size={16} />
-            <span>保存</span>
           </button>
         </div>
       </div>
 
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto px-4 py-4">
+        {/* 最初のメッセージの前に挿入ボタン */}
+        <div className="flex justify-center mb-2">
+          <button
+            onClick={() => handleInsertMessage(-1)}
+            className="w-8 h-8 bg-gray-200 hover:bg-gray-300 rounded-full flex items-center justify-center text-gray-600 hover:text-gray-800 transition-colors opacity-60 hover:opacity-100"
+          >
+            <IoAdd size={16} />
+          </button>
+        </div>
+        
         {editingMessages.map((message, index) => (
-          <div key={message.id} className="mb-3 relative group">
+          <div key={message.id}>
+            <div className="mb-3 relative group">
             {editingMessageId === message.id ? (
               <div className="bg-white border border-blue-300 rounded-lg p-3 shadow-md">
-                <div className="flex items-center justify-between mb-2">
-                  <button
-                    onClick={() => handleToggleMessageType(message.id)}
-                    className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      message.isUser
-                        ? 'bg-[#06C755] text-white'
-                        : 'bg-gray-200 text-gray-700'
-                    }`}
-                  >
-                    {message.isUser ? 'あなた' : '相手'}
-                  </button>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex bg-gray-200 rounded-full p-1">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (message.isUser) {
+                          handleToggleMessageType(message.id);
+                        }
+                      }}
+                      className={`px-3 py-1 rounded-full text-xs font-medium transition-all duration-200 ${
+                        !message.isUser 
+                          ? 'bg-white text-gray-900 shadow-sm' 
+                          : 'text-gray-600 hover:text-gray-900'
+                      }`}
+                    >
+                      相手
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!message.isUser) {
+                          handleToggleMessageType(message.id);
+                        }
+                      }}
+                      className={`px-3 py-1 rounded-full text-xs font-medium transition-all duration-200 ${
+                        message.isUser 
+                          ? 'bg-[#06C755] text-white shadow-sm' 
+                          : 'text-gray-600 hover:text-gray-900'
+                      }`}
+                    >
+                      あなた
+                    </button>
+                  </div>
                   <div className="flex space-x-2">
+                    <button
+                      onClick={() => {
+                        handleDeleteMessage(message.id);
+                        setEditingMessageId(null);
+                      }}
+                      className="bg-red-500 text-white px-3 py-1 rounded text-xs hover:bg-red-600"
+                    >
+                      削除
+                    </button>
                     <button
                       onClick={handleSaveEdit}
                       className="bg-[#06C755] text-white px-3 py-1 rounded text-xs hover:bg-[#05B04B]"
@@ -340,6 +401,47 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                     </button>
                   </div>
                 </div>
+                
+                {/* 既読設定（自分のメッセージの場合のみ表示） */}
+                {message.isUser && (
+                  <div className="mb-3">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      既読状態
+                    </label>
+                    <div className="flex bg-gray-200 rounded-full p-1">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (message.isRead) {
+                            handleToggleReadStatus(message.id);
+                          }
+                        }}
+                        className={`px-3 py-1 rounded-full text-xs font-medium transition-all duration-200 ${
+                          !message.isRead 
+                            ? 'bg-white text-gray-900 shadow-sm' 
+                            : 'text-gray-600 hover:text-gray-900'
+                        }`}
+                      >
+                        未読
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!message.isRead) {
+                            handleToggleReadStatus(message.id);
+                          }
+                        }}
+                        className={`px-3 py-1 rounded-full text-xs font-medium transition-all duration-200 ${
+                          message.isRead 
+                            ? 'bg-blue-500 text-white shadow-sm' 
+                            : 'text-gray-600 hover:text-gray-900'
+                        }`}
+                      >
+                        既読
+                      </button>
+                    </div>
+                  </div>
+                )}
                 
                 <div className="space-y-3">
                   <textarea
@@ -373,131 +475,27 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                     message={message} 
                     showAvatar={shouldShowAvatar(index)}
                     showTail={shouldShowTail(index)}
+                    isGroupChat={isGroupChat}
                   />
-                </div>
-                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <div className="flex space-x-1">
-                    <button
-                      onClick={() => handleToggleMessageType(message.id)}
-                      className={`px-2 py-1 rounded text-xs font-medium ${
-                        message.isUser
-                          ? 'bg-[#06C755] text-white'
-                          : 'bg-gray-200 text-gray-700'
-                      }`}
-                    >
-                      {message.isUser ? 'あなた' : '相手'}
-                    </button>
-                    {message.isUser && (
-                      <button
-                        onClick={() => handleToggleReadStatus(message.id)}
-                        className={`px-2 py-1 rounded text-xs font-medium ${
-                          message.isRead
-                            ? 'bg-blue-500 text-white'
-                            : 'bg-gray-300 text-gray-700'
-                        }`}
-                      >
-                        {message.isRead ? '既読' : '未読'}
-                      </button>
-                    )}
-                    <button
-                      onClick={() => handleDeleteMessage(message.id)}
-                      className="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600"
-                    >
-                      <IoTrash size={12} />
-                    </button>
-                  </div>
                 </div>
               </div>
             )}
+            </div>
+            
+            {/* 各メッセージの後に挿入ボタン */}
+            <div className="flex justify-center my-2">
+              <button
+                onClick={() => handleInsertMessage(index)}
+                className="w-8 h-8 bg-gray-200 hover:bg-gray-300 rounded-full flex items-center justify-center text-gray-600 hover:text-gray-800 transition-colors opacity-60 hover:opacity-100"
+              >
+                <IoAdd size={16} />
+              </button>
+            </div>
           </div>
         ))}
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Add Message Input */}
-      <div className="bg-white border-t border-gray-200 px-4 py-3">
-        <div className="flex items-center justify-between mb-2">
-          {isGroupChat ? (
-            <select
-              value={newMessageUserId || ''}
-              onChange={(e) => {
-                setNewMessageUserId(e.target.value);
-                setNewMessageIsUser(e.target.value === 'user1');
-              }}
-              className="px-4 py-2 rounded-full text-sm font-medium border border-gray-300"
-            >
-              <option value="">送信者を選択</option>
-              {participants.map(participant => (
-                <option key={participant.id} value={participant.id}>
-                  {participant.name}
-                </option>
-              ))}
-            </select>
-          ) : (
-            <div className="flex bg-gray-200 rounded-full p-1">
-              <button
-                onClick={() => setNewMessageIsUser(false)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                  !newMessageIsUser 
-                    ? 'bg-white text-gray-900 shadow-sm' 
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                相手
-              </button>
-              <button
-                onClick={() => setNewMessageIsUser(true)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                  newMessageIsUser 
-                    ? 'bg-[#06C755] text-white shadow-sm' 
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                あなた
-              </button>
-            </div>
-          )}
-          
-        </div>
-
-        <div className="mb-3">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            日時（空白の場合は現在時刻）
-          </label>
-          <input
-            type="datetime-local"
-            value={newMessageTimestamp}
-            onChange={(e) => setNewMessageTimestamp(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#06C755] focus:border-transparent"
-          />
-        </div>
-
-        <div className="flex space-x-2">
-          <textarea
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-2xl resize-none focus:outline-none focus:ring-2 focus:ring-[#06C755] focus:border-transparent"
-            rows={2}
-            placeholder="新しいメッセージを入力..."
-            style={{ 
-              minHeight: '40px', 
-              maxHeight: '120px',
-              lineHeight: '1.5'
-            }}
-          />
-          <button
-            onClick={handleAddMessage}
-            className={`flex-shrink-0 p-2 rounded-full ${
-              newMessage.trim()
-                ? 'bg-[#06C755] text-white hover:bg-[#05B04B]'
-                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-            }`}
-            disabled={!newMessage.trim()}
-          >
-            <IoAdd size={20} />
-          </button>
-        </div>
-      </div>
 
       {/* Avatar Editor Modal */}
       {showAvatarEditor && editingAvatarFor && (
