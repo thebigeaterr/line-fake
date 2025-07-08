@@ -107,7 +107,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       otherUserName: otherUserName,
       otherAvatarSettings: otherAvatarSettings,
       userAvatarSettings: userAvatarSettings,
-      participants: participants,
+      // participants配列を送信せず、個別のアバター設定を優先
       isGroup: isGroupChat
     };
     
