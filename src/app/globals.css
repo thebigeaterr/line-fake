@@ -1,8 +1,11 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
+  --background: #7494c0;
   --foreground: #171717;
+  --line-green: #8de055;
+  --chat-bg: #ffffff;
+  --header-bg: #273246;
 }
 
 @theme inline {
@@ -22,5 +25,137 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  overflow: hidden;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+#__next {
+  height: 100vh;
+}
+
+.chat-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.message-bubble-enter {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.message-bubble-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: all 0.3s ease;
+}
+
+.message-bubble-exit {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.message-bubble-exit-active {
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: all 0.3s ease;
+}
+
+.chat-input-focus {
+  animation: inputFocus 0.2s ease;
+}
+
+@keyframes inputFocus {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.loading-dots {
+  display: inline-block;
+  position: relative;
+  width: 40px;
+  height: 8px;
+}
+
+.loading-dots div {
+  position: absolute;
+  top: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #999;
+  animation: loadingDots 1.2s linear infinite;
+}
+
+.loading-dots div:nth-child(1) {
+  left: 0;
+  animation-delay: -0.24s;
+}
+
+.loading-dots div:nth-child(2) {
+  left: 12px;
+  animation-delay: -0.12s;
+}
+
+.loading-dots div:nth-child(3) {
+  left: 24px;
+  animation-delay: 0s;
+}
+
+@keyframes loadingDots {
+  0%, 80%, 100% {
+    transform: scale(0);
+  }
+  40% {
+    transform: scale(1);
+  }
+}
+
+.message-time-fade {
+  opacity: 0.7;
+  transition: opacity 0.3s ease;
+}
+
+.message-time-fade:hover {
+  opacity: 1;
+}
+
+.admin-panel-slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.chat-slide-in {
+  animation: slideInFromLeft 0.3s ease-out;
+}
+
+@keyframes slideInFromLeft {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
 }
