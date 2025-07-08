@@ -82,9 +82,9 @@ export default function Home() {
     }
   }, [viewMode]);
 
-  const handleUpdateMessages = (newMessages: Message[], updatedUserData?: Record<string, unknown>) => {
+  const handleUpdateMessages = async (newMessages: Message[], updatedUserData?: Record<string, unknown>) => {
     if (currentRoomId) {
-      updateChatRoom(currentRoomId, newMessages, updatedUserData);
+      await updateChatRoom(currentRoomId, newMessages, updatedUserData);
     }
   };
 

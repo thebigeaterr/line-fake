@@ -6,7 +6,7 @@ import { AvatarEditor } from './AvatarEditor';
 
 interface AdminPanelProps {
   messages: Message[];
-  onUpdateMessages: (messages: Message[], userData?: Record<string, unknown>) => void;
+  onUpdateMessages: (messages: Message[], userData?: Record<string, unknown>) => Promise<void>;
   onBack: () => void;
   initialUserData?: Record<string, unknown>;
 }
@@ -96,7 +96,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   };
 
   // 親コンポーネントに変更を反映する関数
-  const saveChangesToParent = () => {
+  const saveChangesToParent = async () => {
     // グループチャットでない場合は、相手の名前を全メッセージに反映
     const finalMessages = isGroupChat ? editingMessages : editingMessages.map(msg => 
       !msg.isUser ? { ...msg, userName: otherUserName } : msg
@@ -111,7 +111,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       isGroup: isGroupChat
     };
     
-    onUpdateMessages(finalMessages, updatedUserData);
+    await onUpdateMessages(finalMessages, updatedUserData);
     setHasChanges(false);
   };
 
@@ -123,8 +123,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     }
   };
 
-  const handleSaveAndBack = () => {
-    saveChangesToParent();
+  const handleSaveAndBack = async () => {
+    await saveChangesToParent();
     setShowSaveConfirm(false);
     onBack();
   };

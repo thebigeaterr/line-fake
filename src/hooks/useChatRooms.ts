@@ -239,7 +239,7 @@ export const useChatRooms = () => {
   };
 
   // チャットルームを更新（管理画面から）
-  const updateChatRoom = (roomId: string, messages: Message[], userData?: Record<string, unknown>) => {
+  const updateChatRoom = async (roomId: string, messages: Message[], userData?: Record<string, unknown>) => {
     console.log('updateChatRoom called with:', { roomId, userData });
     const updatedRooms = chatRooms.map(room => {
       if (room.id === roomId) {
@@ -301,8 +301,8 @@ export const useChatRooms = () => {
     console.log('updateChatRoom: setting state and saving');
     // 即座に状態を更新
     setChatRooms(updatedRooms);
-    // 非同期で保存（awaitしない）
-    saveChatRooms(updatedRooms);
+    // 即座に保存（awaitする）
+    await saveChatRooms(updatedRooms);
   };
 
   // 未読数をリセット
