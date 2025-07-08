@@ -1,36 +1,114 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# LINE Fake - LINE Mobile Chat Replica
 
-## Getting Started
+LINEのモバイルチャット画面を再現したWebアプリケーション
 
-First, run the development server:
+## 機能
+
+- ✅ LINEライクなチャット画面
+- ✅ メッセージの送信・受信
+- ✅ アバター画像の設定
+- ✅ チャットルーム管理
+- ✅ 管理画面でのメッセージ編集
+- ✅ データの永続化（Supabase）
+- ✅ レスポンシブデザイン
+
+## 技術スタック
+
+- **Frontend**: Next.js 15, React, TypeScript
+- **Styling**: Tailwind CSS
+- **Database**: Supabase (PostgreSQL)
+- **Deployment**: Vercel
+- **Icons**: React Icons
+
+## セットアップ
+
+### 1. リポジトリのクローン
+
+```bash
+git clone https://github.com/thebigeaterr/line-fake.git
+cd line-fake
+```
+
+### 2. 依存関係のインストール
+
+```bash
+npm install
+```
+
+### 3. Supabaseの設定
+
+#### 3.1 Supabaseプロジェクトの作成
+
+1. [Supabase](https://supabase.com) にアクセス
+2. 「New Project」をクリック
+3. プロジェクト名: `line-fake`
+4. データベースパスワードを設定
+5. リージョン: `Northeast Asia (Tokyo)`
+6. 「Create new project」をクリック
+
+#### 3.2 データベーステーブルの作成
+
+1. Supabaseダッシュボードの「SQL Editor」を開く
+2. `supabase-setup.sql` の内容をコピー＆ペースト
+3. 「Run」をクリックしてテーブルを作成
+
+#### 3.3 環境変数の設定
+
+1. `.env.local.example` を `.env.local` にコピー
+2. Supabaseの「Settings」→「API」から以下を取得：
+   - Project URL
+   - anon public key
+3. `.env.local` に値を設定
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
+```
+
+### 4. 開発サーバーの起動
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## デプロイ
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Vercelでのデプロイ
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. [Vercel](https://vercel.com) にアクセス
+2. GitHubリポジトリを接続
+3. 環境変数を設定：
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+4. デプロイ
 
-## Learn More
+## 使用方法
 
-To learn more about Next.js, take a look at the following resources:
+1. **チャット画面**: メッセージの送信・受信
+2. **管理画面**: メニューボタンからアクセス
+3. **アバター設定**: 管理画面で画像をアップロード
+4. **メッセージ編集**: 管理画面でメッセージを編集・削除
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 開発
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### ビルド
 
-## Deploy on Vercel
+```bash
+npm run build
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### 型チェック
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm run type-check
+```
+
+### リント
+
+```bash
+npm run lint
+```
+
+## ライセンス
+
+MIT License
