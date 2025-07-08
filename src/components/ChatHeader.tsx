@@ -1,5 +1,7 @@
 import React from 'react';
-import { IoCall, IoMenu, IoChevronBack, IoSearch } from 'react-icons/io5';
+import { IoCall, IoChevronBack } from 'react-icons/io5';
+import { HiOutlinePhone } from 'react-icons/hi';
+import { RxHamburgerMenu } from 'react-icons/rx';
 import { AvatarSettings } from '@/types/message';
 
 interface ChatHeaderProps {
@@ -18,8 +20,8 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
   onMenuClick 
 }) => {
   return (
-    <div className="bg-[#8cabd8]/70 backdrop-blur-sm px-4 py-3 flex items-center justify-between">
-      <div className="flex items-center space-x-3">
+    <div className="bg-[#8cabd8]/50 backdrop-blur-sm px-3 py-3 flex items-center justify-between">
+      <div className="flex items-center space-x-1">
         <button
           onClick={onBack}
           className="p-1 text-black hover:text-gray-600"
@@ -28,22 +30,27 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
         </button>
         
         <div>
-          <h2 className="text-lg font-semibold text-black">{roomName}</h2>
+          <h2 className="text-sm font-semibold text-black">{roomName}</h2>
         </div>
       </div>
       
       <div className="flex items-center space-x-1">
         <button className="p-2 text-black hover:text-gray-600">
-          <IoSearch size={20} />
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="m21 21-4.35-4.35"/>
+            <path d="M11 11v-4"/>
+            <path d="M11 11l3.3 2.6"/>
+          </svg>
         </button>
         <button className="p-2 text-black hover:text-gray-600">
-          <IoCall size={20} />
+          <HiOutlinePhone size={20} strokeWidth={1.5} />
         </button>
         <button 
           onClick={onMenuClick}
           className="p-2 text-black hover:text-gray-600"
         >
-          <IoMenu size={20} />
+          <RxHamburgerMenu size={20} />
         </button>
       </div>
     </div>

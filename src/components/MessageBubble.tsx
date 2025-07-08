@@ -23,7 +23,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, showAvata
   }, [message.timestamp]);
 
   return (
-    <div className={`flex mb-1 items-start ${message.isUser ? 'justify-end' : 'justify-start'}`}>
+    <div className={`flex mb-1.5 items-start ${message.isUser ? 'justify-end' : 'justify-start'}`}>
       {!message.isUser && showAvatar && (
         <div className="w-8 h-8 rounded-full bg-gray-300 flex-shrink-0 mr-3 overflow-hidden">
           {message.avatarSettings?.url ? (
