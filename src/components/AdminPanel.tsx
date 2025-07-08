@@ -31,6 +31,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const [isGroupChat, setIsGroupChat] = useState(false);
   const [showParticipantEditor, setShowParticipantEditor] = useState(false);
   // const [editingParticipantId, setEditingParticipantId] = useState<string | null>(null);
+  const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -80,10 +82,23 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     return () => clearTimeout(timer);
   }, [editingMessages]);
 
-  // 共通の保存関数
-  const saveChangesToParent = (updatedMessages: Message[]) => {
+  // 変更を追跡する関数
+  const markAsChanged = () => {
+    if (!hasChanges) {
+      setHasChanges(true);
+    }
+  };
+
+  // 共通の保存関数（即座には親に反映しない）
+  const saveChangesLocally = (updatedMessages: Message[]) => {
+    setEditingMessages(updatedMessages);
+    markAsChanged();
+  };
+
+  // 親コンポーネントに変更を反映する関数
+  const saveChangesToParent = () => {
     // グループチャットでない場合は、相手の名前を全メッセージに反映
-    const finalMessages = isGroupChat ? updatedMessages : updatedMessages.map(msg => 
+    const finalMessages = isGroupChat ? editingMessages : editingMessages.map(msg => 
       !msg.isUser ? { ...msg, userName: otherUserName } : msg
     );
     
@@ -97,6 +112,27 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     };
     
     onUpdateMessages(finalMessages, updatedUserData);
+    setHasChanges(false);
+  };
+
+  const handleBackClick = () => {
+    if (hasChanges) {
+      setShowSaveConfirm(true);
+    } else {
+      onBack();
+    }
+  };
+
+  const handleSaveAndBack = () => {
+    saveChangesToParent();
+    setShowSaveConfirm(false);
+    onBack();
+  };
+
+  const handleDiscardAndBack = () => {
+    setShowSaveConfirm(false);
+    setHasChanges(false);
+    onBack();
   };
 
   const handleInsertMessage = (afterIndex: number) => {
@@ -116,10 +152,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     // -1の場合は最初に挿入、それ以外は指定されたインデックスの後に挿入
     const insertIndex = afterIndex === -1 ? 0 : afterIndex + 1;
     newMessages.splice(insertIndex, 0, message);
-    setEditingMessages(newMessages);
     
-    // 即時保存
-    saveChangesToParent(newMessages);
+    // ローカルに保存
+    saveChangesLocally(newMessages);
     
     // 新規追加されたメッセージを編集モードにする
     setTimeout(() => {
@@ -143,14 +178,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       updatedMessages = editingMessages.map(msg => 
         msg.isUser ? { ...msg, avatarSettings: settings || undefined } : msg
       );
-      setEditingMessages(updatedMessages);
+      saveChangesLocally(updatedMessages);
     } else if (editingAvatarFor === 'other') {
       setOtherAvatarSettings(settings);
       // 既存の相手のメッセージにも適用
       updatedMessages = editingMessages.map(msg => 
         !msg.isUser ? { ...msg, avatarSettings: settings || undefined, userName: otherUserName } : msg
       );
-      setEditingMessages(updatedMessages);
+      saveChangesLocally(updatedMessages);
     }
     
     // 即時保存
@@ -182,7 +217,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           timestamp: newTimestamp
         } : msg
       );
-      setEditingMessages(updatedMessages);
+      saveChangesLocally(updatedMessages);
       setEditingMessageId(null);
       setEditingText('');
       setEditingTimestamp('');
@@ -200,10 +235,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
   const handleDeleteMessage = (id: string) => {
     const updatedMessages = editingMessages.filter(msg => msg.id !== id);
-    setEditingMessages(updatedMessages);
-    
-    // 即時保存
-    saveChangesToParent(updatedMessages);
+    saveChangesLocally(updatedMessages);
   };
 
   const handleToggleMessageType = (id: string) => {
@@ -221,30 +253,25 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       }
       return msg;
     });
-    setEditingMessages(updatedMessages);
-    
-    // 即時保存
-    saveChangesToParent(updatedMessages);
+    saveChangesLocally(updatedMessages);
   };
 
   const handleToggleReadStatus = (id: string) => {
     const updatedMessages = editingMessages.map(msg => 
       msg.id === id && msg.isUser ? { ...msg, isRead: !msg.isRead } : msg
     );
-    setEditingMessages(updatedMessages);
-    
-    // 即時保存
-    saveChangesToParent(updatedMessages);
+    saveChangesLocally(updatedMessages);
   };
 
 
   const handleNameChange = (newName: string) => {
     setOtherUserName(newName);
+    markAsChanged();
     // 既存の相手のメッセージの名前も更新
     const updatedMessages = editingMessages.map(msg => 
       !msg.isUser ? { ...msg, userName: newName } : msg
     );
-    setEditingMessages(updatedMessages);
+    saveChangesLocally(updatedMessages);
     setShowNameEditor(false);
     
     // 即時保存
@@ -293,7 +320,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       <div className="bg-[#8cabd8]/70 backdrop-blur-sm px-4 py-3 flex items-center justify-between">
         <div className="flex items-center space-x-3">
           <button
-            onClick={onBack}
+            onClick={handleBackClick}
             className="p-1 text-black hover:text-gray-600"
           >
             <IoChevronBack size={24} />
@@ -316,9 +343,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 ...msg,
                 isRead: msg.isUser ? true : msg.isRead
               }));
-              setEditingMessages(updatedMessages);
-              // 即時保存
-              saveChangesToParent(updatedMessages);
+              saveChangesLocally(updatedMessages);
             }}
             className="bg-purple-500 text-white px-3 py-2 rounded-lg hover:bg-purple-600 flex items-center space-x-1 text-sm"
           >
@@ -655,6 +680,32 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 className="flex-1 px-4 py-2 bg-[#06C755] text-white rounded-lg hover:bg-[#05B04B]"
               >
                 保存
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Save Confirmation Modal */}
+      {showSaveConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-80 max-w-[90vw]">
+            <h3 className="text-lg font-semibold mb-4">変更を保存しますか？</h3>
+            <p className="text-gray-600 mb-6">
+              編集内容を保存してからトーク画面に戻ります。
+            </p>
+            <div className="flex space-x-3">
+              <button
+                onClick={handleDiscardAndBack}
+                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+              >
+                いいえ
+              </button>
+              <button
+                onClick={handleSaveAndBack}
+                className="flex-1 px-4 py-2 bg-[#06C755] text-white rounded-lg hover:bg-[#05B04B]"
+              >
+                はい
               </button>
             </div>
           </div>
