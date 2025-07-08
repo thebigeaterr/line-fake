@@ -61,25 +61,10 @@ export async function GET() {
       if (error) {
         console.log('Supabase read error:', error.message);
         
-        // データが存在しない場合（初回）
+        // データが存在しない場合（初回のみ）
         if (error.code === 'PGRST116') {
-          console.log('No data found, creating default data...');
-          
-          // デフォルトデータを挿入
-          const { error: insertError } = await supabase
-            .from('chat_data')
-            .insert([
-              { id: 'default', data: defaultData }
-            ]);
-          
-          if (insertError) {
-            console.error('Failed to insert default data:', insertError);
-            return NextResponse.json({ 
-              error: 'Failed to create default data', 
-              details: insertError.message 
-            }, { status: 500 });
-          }
-          
+          console.log('No data found, returning default data without saving...');
+          // データベースには保存せず、デフォルトデータを返すだけ
           return NextResponse.json(defaultData);
         }
         
@@ -115,17 +100,8 @@ export async function POST(request: NextRequest) {
     const jsonString = JSON.stringify(data);
     console.log('JSON size:', jsonString.length, 'bytes');
     
-    // アバターデータを除外して保存
-    const cleanData = data.map((room: Record<string, unknown>) => ({
-      ...room,
-      messages: (room.messages as Record<string, unknown>[])?.map((msg: Record<string, unknown>) => ({
-        ...msg,
-        avatarSettings: msg.avatarSettings ? {
-          ...(msg.avatarSettings as Record<string, unknown>),
-          url: (msg.avatarSettings as Record<string, unknown>)?.url ? '[LARGE_IMAGE_DATA]' : null
-        } : null
-      }))
-    }));
+    // 画像データもそのまま保存
+    const cleanData = data;
     
     console.log('Cleaned data preview:', JSON.stringify(cleanData[0], null, 2).substring(0, 500));
     

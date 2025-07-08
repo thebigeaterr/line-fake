@@ -25,15 +25,36 @@ export const AvatarEditor: React.FC<AvatarEditorProps> = ({
   );
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const url = e.target?.result as string;
+      try {
+        // FormDataを作成してファイルを送信
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        // アップロードAPIを呼び出し
+        const response = await fetch('/api/upload-avatar', {
+          method: 'POST',
+          body: formData
+        });
+        
+        if (!response.ok) {
+          const error = await response.json();
+          console.error('Upload failed:', error);
+          alert('画像のアップロードに失敗しました');
+          return;
+        }
+        
+        const { url } = await response.json();
+        console.log('Avatar uploaded successfully:', url);
+        
+        // Supabase StorageのURLを設定
         setSettings(prev => ({ ...prev, url }));
-      };
-      reader.readAsDataURL(file);
+      } catch (error) {
+        console.error('Upload error:', error);
+        alert('画像のアップロードに失敗しました');
+      }
     }
   };
 

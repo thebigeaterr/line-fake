@@ -118,24 +118,34 @@ export const ChatRoomList: React.FC<ChatRoomListProps> = ({
               >
                 {/* Avatar */}
                 <div className="w-12 h-12 rounded-full bg-gray-300 flex-shrink-0 mr-3 overflow-hidden">
-                  {room.participants[1]?.avatarSettings && (room.participants[1].avatarSettings as AvatarSettings)?.url ? (
-                    <div 
-                      className="w-full h-full bg-cover bg-center"
-                      style={{
-                        backgroundImage: `url(${(room.participants[1].avatarSettings as AvatarSettings).url})`,
-                        backgroundSize: `${(room.participants[1].avatarSettings as AvatarSettings).scale * 100}%`,
-                        backgroundPosition: `${(room.participants[1].avatarSettings as AvatarSettings).positionX}% ${(room.participants[1].avatarSettings as AvatarSettings).positionY}%`
-                      }}
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      {room.isGroup ? (
-                        <IoPeople size={24} className="text-gray-600" />
-                      ) : (
-                        <IoPerson size={24} className="text-gray-600" />
-                      )}
-                    </div>
-                  )}
+                  {(() => {
+                    const participant = room.participants[1];
+                    const avatarSettings = participant?.avatarSettings as AvatarSettings;
+                    console.log('ChatRoomList - Room:', room.id, 'Participant[1]:', participant, 'AvatarSettings:', avatarSettings);
+                    
+                    if (avatarSettings?.url) {
+                      return (
+                        <div 
+                          className="w-full h-full bg-cover bg-center"
+                          style={{
+                            backgroundImage: `url(${avatarSettings.url})`,
+                            backgroundSize: `${avatarSettings.scale * 100}%`,
+                            backgroundPosition: `${avatarSettings.positionX}% ${avatarSettings.positionY}%`
+                          }}
+                        />
+                      );
+                    } else {
+                      return (
+                        <div className="w-full h-full flex items-center justify-center">
+                          {room.isGroup ? (
+                            <IoPeople size={24} className="text-gray-600" />
+                          ) : (
+                            <IoPerson size={24} className="text-gray-600" />
+                          )}
+                        </div>
+                      );
+                    }
+                  })()}
                 </div>
 
                 {/* Room Info */}
