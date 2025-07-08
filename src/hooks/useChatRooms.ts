@@ -240,27 +240,43 @@ export const useChatRooms = () => {
             `グループ (${(userData.participants as unknown[]).length}人)` : 
             (userData?.otherUserName as string) || room.name,
           isGroup: (userData?.isGroup as boolean) || false,
-          participants: (userData?.participants as Array<{id: string; name: string; avatarSettings: AvatarSettings | null}>) || room.participants
+          participants: room.participants // 一旦既存の参加者情報を保持
         };
         
         // ユーザーデータがある場合は参加者情報を更新
         if (userData) {
+          // 参加者情報のコピーを作成
+          const updatedParticipants = [...updatedRoom.participants];
+          
           if (userData.participants) {
             updatedRoom.participants = userData.participants as Array<{id: string; name: string; avatarSettings: AvatarSettings | null}>;
-          }
-          if (!userData.isGroup && userData.otherUserName) {
-            // 1対1チャットの場合、2人目の参加者の名前を更新
-            if (updatedRoom.participants[1]) {
-              updatedRoom.participants[1].name = userData.otherUserName as string;
+          } else {
+            // 個別の更新の場合
+            if (!userData.isGroup && userData.otherUserName) {
+              // 1対1チャットの場合、2人目の参加者の名前を更新
+              if (updatedParticipants[1]) {
+                updatedParticipants[1] = {
+                  ...updatedParticipants[1],
+                  name: userData.otherUserName as string
+                };
+              }
             }
-          }
-          
-          // アバター設定を更新
-          if (userData.otherAvatarSettings !== undefined && updatedRoom.participants[1]) {
-            updatedRoom.participants[1].avatarSettings = userData.otherAvatarSettings as AvatarSettings | null;
-          }
-          if (userData.userAvatarSettings !== undefined && updatedRoom.participants[0]) {
-            updatedRoom.participants[0].avatarSettings = userData.userAvatarSettings as AvatarSettings | null;
+            
+            // アバター設定を更新
+            if (userData.otherAvatarSettings !== undefined && updatedParticipants[1]) {
+              updatedParticipants[1] = {
+                ...updatedParticipants[1],
+                avatarSettings: userData.otherAvatarSettings as AvatarSettings | null
+              };
+            }
+            if (userData.userAvatarSettings !== undefined && updatedParticipants[0]) {
+              updatedParticipants[0] = {
+                ...updatedParticipants[0],
+                avatarSettings: userData.userAvatarSettings as AvatarSettings | null
+              };
+            }
+            
+            updatedRoom.participants = updatedParticipants;
           }
         }
         
