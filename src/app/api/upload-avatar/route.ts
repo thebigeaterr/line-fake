@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     const filePath = `avatars/${fileName}`;
     
     // Supabase Storageにアップロード
-    const { data, error } = await supabase.storage
+    const { error } = await supabase.storage
       .from('avatars')
       .upload(filePath, file, {
         contentType: file.type,
