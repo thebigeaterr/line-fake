@@ -52,12 +52,12 @@ export const useChatRooms = () => {
       if (response.ok) {
         const data = await response.json();
         // 日付を復元
-        const restoredData = data.map((room: any) => ({
+        const restoredData = data.map((room: Record<string, unknown>) => ({
           ...room,
-          lastMessageTime: room.lastMessageTime ? new Date(room.lastMessageTime) : undefined,
-          messages: room.messages.map((msg: any) => ({
+          lastMessageTime: room.lastMessageTime ? new Date(room.lastMessageTime as string) : undefined,
+          messages: (room.messages as Record<string, unknown>[]).map((msg: Record<string, unknown>) => ({
             ...msg,
-            timestamp: new Date(msg.timestamp)
+            timestamp: new Date(msg.timestamp as string)
           }))
         }));
         setChatRooms(restoredData);
@@ -69,12 +69,12 @@ export const useChatRooms = () => {
       if (savedData) {
         try {
           const parsedData = JSON.parse(savedData);
-          const restoredData = parsedData.map((room: any) => ({
+          const restoredData = parsedData.map((room: Record<string, unknown>) => ({
             ...room,
-            lastMessageTime: room.lastMessageTime ? new Date(room.lastMessageTime) : undefined,
-            messages: room.messages.map((msg: any) => ({
+            lastMessageTime: room.lastMessageTime ? new Date(room.lastMessageTime as string) : undefined,
+            messages: (room.messages as Record<string, unknown>[]).map((msg: Record<string, unknown>) => ({
               ...msg,
-              timestamp: new Date(msg.timestamp)
+              timestamp: new Date(msg.timestamp as string)
             }))
           }));
           setChatRooms(restoredData);
@@ -207,8 +207,8 @@ export const useChatRooms = () => {
           timestamp: new Date(),
           userName: isUser ? 'あなた' : room.participants[1]?.name || 'ユーザー',
           avatarSettings: isUser ? 
-            room.participants[0]?.avatarSettings : 
-            room.participants[1]?.avatarSettings,
+            (room.participants[0]?.avatarSettings as AvatarSettings | undefined) : 
+            (room.participants[1]?.avatarSettings as AvatarSettings | undefined),
           isRead: isUser ? true : undefined
         };
         
@@ -227,7 +227,7 @@ export const useChatRooms = () => {
   };
 
   // チャットルームを更新（管理画面から）
-  const updateChatRoom = (roomId: string, messages: Message[], userData?: any) => {
+  const updateChatRoom = (roomId: string, messages: Message[], userData?: Record<string, unknown>) => {
     const updatedRooms = chatRooms.map(room => {
       if (room.id === roomId) {
         const lastMsg = messages[messages.length - 1];
@@ -237,30 +237,30 @@ export const useChatRooms = () => {
           lastMessage: lastMsg?.text,
           lastMessageTime: lastMsg?.timestamp,
           name: userData?.isGroup && userData?.participants ? 
-            `グループ (${userData.participants.length}人)` : 
-            userData?.otherUserName || room.name,
-          isGroup: userData?.isGroup || false,
-          participants: userData?.participants || room.participants
+            `グループ (${(userData.participants as unknown[]).length}人)` : 
+            (userData?.otherUserName as string) || room.name,
+          isGroup: (userData?.isGroup as boolean) || false,
+          participants: (userData?.participants as Array<{id: string; name: string; avatarSettings: AvatarSettings | null}>) || room.participants
         };
         
         // ユーザーデータがある場合は参加者情報を更新
         if (userData) {
           if (userData.participants) {
-            updatedRoom.participants = userData.participants;
+            updatedRoom.participants = userData.participants as Array<{id: string; name: string; avatarSettings: AvatarSettings | null}>;
           }
           if (!userData.isGroup && userData.otherUserName) {
             // 1対1チャットの場合、2人目の参加者の名前を更新
             if (updatedRoom.participants[1]) {
-              updatedRoom.participants[1].name = userData.otherUserName;
+              updatedRoom.participants[1].name = userData.otherUserName as string;
             }
           }
           
           // アバター設定を更新
           if (userData.otherAvatarSettings !== undefined && updatedRoom.participants[1]) {
-            updatedRoom.participants[1].avatarSettings = userData.otherAvatarSettings;
+            updatedRoom.participants[1].avatarSettings = userData.otherAvatarSettings as AvatarSettings | null;
           }
           if (userData.userAvatarSettings !== undefined && updatedRoom.participants[0]) {
-            updatedRoom.participants[0].avatarSettings = userData.userAvatarSettings;
+            updatedRoom.participants[0].avatarSettings = userData.userAvatarSettings as AvatarSettings | null;
           }
         }
         

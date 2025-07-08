@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { IoAdd, IoTrash, IoPeople, IoPerson } from 'react-icons/io5';
-import { Message } from '@/types/message';
+import { Message, AvatarSettings } from '@/types/message';
 
 export interface ChatRoomData {
   id: string;
@@ -12,7 +12,7 @@ export interface ChatRoomData {
   participants: Array<{
     id: string;
     name: string;
-    avatarSettings: any;
+    avatarSettings: unknown;
   }>;
   messages: Message[];
 }
@@ -22,7 +22,7 @@ interface ChatRoomListProps {
   onSelectRoom: (roomId: string) => void;
   onCreateRoom: () => void;
   onDeleteRoom: (roomId: string) => void;
-  onClearAllData?: () => void;
+  // onClearAllData?: () => void;
 }
 
 export const ChatRoomList: React.FC<ChatRoomListProps> = ({
@@ -30,7 +30,7 @@ export const ChatRoomList: React.FC<ChatRoomListProps> = ({
   onSelectRoom,
   onCreateRoom,
   onDeleteRoom,
-  onClearAllData
+  // onClearAllData
 }) => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [isClient, setIsClient] = useState(false);
@@ -118,13 +118,13 @@ export const ChatRoomList: React.FC<ChatRoomListProps> = ({
               >
                 {/* Avatar */}
                 <div className="w-12 h-12 rounded-full bg-gray-300 flex-shrink-0 mr-3 overflow-hidden">
-                  {room.participants[1]?.avatarSettings?.url ? (
+                  {room.participants[1]?.avatarSettings && (room.participants[1].avatarSettings as AvatarSettings)?.url ? (
                     <div 
                       className="w-full h-full bg-cover bg-center"
                       style={{
-                        backgroundImage: `url(${room.participants[1].avatarSettings.url})`,
-                        backgroundSize: `${room.participants[1].avatarSettings.scale * 100}%`,
-                        backgroundPosition: `${room.participants[1].avatarSettings.positionX}% ${room.participants[1].avatarSettings.positionY}%`
+                        backgroundImage: `url(${(room.participants[1].avatarSettings as AvatarSettings).url})`,
+                        backgroundSize: `${(room.participants[1].avatarSettings as AvatarSettings).scale * 100}%`,
+                        backgroundPosition: `${(room.participants[1].avatarSettings as AvatarSettings).positionX}% ${(room.participants[1].avatarSettings as AvatarSettings).positionY}%`
                       }}
                     />
                   ) : (

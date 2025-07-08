@@ -62,9 +62,9 @@ export const useMessages = () => {
     if (savedMessages) {
       try {
         const parsedMessages = JSON.parse(savedMessages);
-        const messagesWithDates = parsedMessages.map((msg: any) => ({
+        const messagesWithDates = parsedMessages.map((msg: Record<string, unknown>) => ({
           ...msg,
-          timestamp: new Date(msg.timestamp),
+          timestamp: new Date(msg.timestamp as string),
           // 既存のメッセージで自分のメッセージに既読状態がない場合は既読に設定
           isRead: msg.isUser && msg.isRead === undefined ? true : msg.isRead
         }));
@@ -107,7 +107,7 @@ export const useMessages = () => {
       isUser,
       timestamp: new Date(),
       userName: isUser ? 'あなた' : userData.otherUserName,
-      avatarSettings: isUser ? userData.userAvatarSettings : userData.otherAvatarSettings,
+      avatarSettings: isUser ? (userData.userAvatarSettings || undefined) : (userData.otherAvatarSettings || undefined),
       isRead: isUser ? true : undefined // 自分のメッセージは既読で開始
     };
     

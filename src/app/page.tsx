@@ -6,6 +6,7 @@ import { AdminPanel } from '@/components/AdminPanel';
 import { ChatRoomList } from '@/components/ChatRoomList';
 import { NewChatModal } from '@/components/NewChatModal';
 import { useChatRooms } from '@/hooks/useChatRooms';
+import { Message, AvatarSettings } from '@/types/message';
 
 type ViewMode = 'list' | 'chat' | 'admin';
 
@@ -22,7 +23,7 @@ export default function Home() {
     addMessage, 
     updateChatRoom, 
     resetUnreadCount,
-    clearAllData 
+    // clearAllData 
   } = useChatRooms();
 
   const currentRoom = getCurrentRoom();
@@ -81,7 +82,7 @@ export default function Home() {
     }
   }, [viewMode]);
 
-  const handleUpdateMessages = (newMessages: any[], updatedUserData?: any) => {
+  const handleUpdateMessages = (newMessages: Message[], updatedUserData?: Record<string, unknown>) => {
     if (currentRoomId) {
       updateChatRoom(currentRoomId, newMessages, updatedUserData);
     }
@@ -96,14 +97,13 @@ export default function Home() {
             onSelectRoom={handleSelectRoom}
             onCreateRoom={handleCreateRoom}
             onDeleteRoom={handleDeleteRoom}
-            onClearAllData={clearAllData}
           />
         </div>
       ) : viewMode === 'chat' && currentRoom ? (
         <div className="chat-slide-in h-full">
           <ChatRoom
             roomName={currentRoom.name}
-            roomAvatarSettings={currentRoom.participants[1]?.avatarSettings}
+            roomAvatarSettings={currentRoom.participants[1]?.avatarSettings as AvatarSettings}
             messages={currentRoom.messages}
             onSendMessage={handleSendMessage}
             onBack={handleBackToList}
@@ -119,8 +119,8 @@ export default function Home() {
             onBack={handleBackToChat}
             initialUserData={{
               otherUserName: currentRoom.participants[1]?.name || 'ユーザー',
-              otherAvatarSettings: currentRoom.participants[1]?.avatarSettings,
-              userAvatarSettings: currentRoom.participants[0]?.avatarSettings,
+              otherAvatarSettings: currentRoom.participants[1]?.avatarSettings as AvatarSettings,
+              userAvatarSettings: currentRoom.participants[0]?.avatarSettings as AvatarSettings,
               participants: currentRoom.participants,
               isGroup: currentRoom.isGroup
             }}

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { IoSend } from 'react-icons/io5';
-import { HiOutlinePlus, HiOutlineCamera, HiOutlinePhotograph, HiOutlineMicrophone } from 'react-icons/hi';
-import { HiOutlineEmojiHappy } from 'react-icons/hi';
+// import { HiOutlinePlus, HiOutlineCamera, HiOutlinePhotograph, HiOutlineMicrophone } from 'react-icons/hi';
+// import { HiOutlineEmojiHappy } from 'react-icons/hi';
 
 interface ChatInputProps {
   onSendMessage: (message: string) => void;

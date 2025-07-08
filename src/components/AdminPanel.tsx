@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { IoAdd, IoTrash, IoSend, IoImage, IoClose, IoChevronBack } from 'react-icons/io5';
+import { IoAdd, IoTrash, IoImage, IoClose, IoChevronBack } from 'react-icons/io5';
 import { Message, AvatarSettings } from '@/types/message';
 import { MessageBubble } from './MessageBubble';
 import { AvatarEditor } from './AvatarEditor';
 
 interface AdminPanelProps {
   messages: Message[];
-  onUpdateMessages: (messages: Message[], userData?: any) => void;
+  onUpdateMessages: (messages: Message[], userData?: Record<string, unknown>) => void;
   onBack: () => void;
-  initialUserData?: any;
+  initialUserData?: Record<string, unknown>;
 }
 
 export const AdminPanel: React.FC<AdminPanelProps> = ({
@@ -30,7 +30,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const [participants, setParticipants] = useState<Array<{id: string; name: string; avatarSettings: AvatarSettings | null}>>([]);
   const [isGroupChat, setIsGroupChat] = useState(false);
   const [showParticipantEditor, setShowParticipantEditor] = useState(false);
-  const [editingParticipantId, setEditingParticipantId] = useState<string | null>(null);
+  // const [editingParticipantId, setEditingParticipantId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -64,10 +64,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     // 初期ユーザーデータから参加者情報を設定
     if (initialUserData) {
       if (initialUserData.participants) {
-        setParticipants(initialUserData.participants);
+        setParticipants(initialUserData.participants as Array<{id: string; name: string; avatarSettings: AvatarSettings | null}>);
       }
       if (initialUserData.isGroup !== undefined) {
-        setIsGroupChat(initialUserData.isGroup);
+        setIsGroupChat(initialUserData.isGroup as boolean);
       }
     }
   }, [messages, initialUserData, editingMessages.length]);
@@ -88,7 +88,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     );
     
     // ユーザーデータも同時に保存
-    const updatedUserData = {
+    const updatedUserData: Record<string, unknown> = {
       otherUserName: otherUserName,
       otherAvatarSettings: otherAvatarSettings,
       userAvatarSettings: userAvatarSettings,
@@ -107,7 +107,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       isUser: true,
       timestamp: timestamp,
       userName: 'あなた',
-      avatarSettings: userAvatarSettings,
+      avatarSettings: userAvatarSettings || undefined,
       isRead: true,
       userId: 'user1'
     };
@@ -141,14 +141,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       setUserAvatarSettings(settings);
       // 既存の自分のメッセージにも適用
       updatedMessages = editingMessages.map(msg => 
-        msg.isUser ? { ...msg, avatarSettings: settings } : msg
+        msg.isUser ? { ...msg, avatarSettings: settings || undefined } : msg
       );
       setEditingMessages(updatedMessages);
     } else if (editingAvatarFor === 'other') {
       setOtherAvatarSettings(settings);
       // 既存の相手のメッセージにも適用
       updatedMessages = editingMessages.map(msg => 
-        !msg.isUser ? { ...msg, avatarSettings: settings, userName: otherUserName } : msg
+        !msg.isUser ? { ...msg, avatarSettings: settings || undefined, userName: otherUserName } : msg
       );
       setEditingMessages(updatedMessages);
     }
@@ -215,7 +215,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           isUser: newIsUser,
           isRead: newIsUser ? true : undefined, // ユーザーメッセージに変更時は既読にリセット
           userName: newIsUser ? 'あなた' : otherUserName,
-          avatarSettings: newIsUser ? userAvatarSettings : otherAvatarSettings,
+          avatarSettings: newIsUser ? (userAvatarSettings || undefined) : (otherAvatarSettings || undefined),
           userId: newIsUser ? 'user1' : 'user2'
         };
       }
@@ -500,7 +500,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       {/* Avatar Editor Modal */}
       {showAvatarEditor && editingAvatarFor && (
         <AvatarEditor
-          currentSettings={editingAvatarFor === 'user' ? userAvatarSettings : otherAvatarSettings}
+          currentSettings={editingAvatarFor === 'user' ? (userAvatarSettings || undefined) : (otherAvatarSettings || undefined)}
           userName={editingAvatarFor === 'user' ? 'あなた' : otherUserName}
           onSave={handleSaveAvatarSettings}
           onClose={() => {

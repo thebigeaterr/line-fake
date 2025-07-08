@@ -1,5 +1,5 @@
 import React from 'react';
-import { IoCall, IoChevronBack } from 'react-icons/io5';
+import { IoChevronBack } from 'react-icons/io5';
 import { HiOutlinePhone } from 'react-icons/hi';
 import { RxHamburgerMenu } from 'react-icons/rx';
 import { AvatarSettings } from '@/types/message';
@@ -7,15 +7,15 @@ import { AvatarSettings } from '@/types/message';
 interface ChatHeaderProps {
   roomName: string;
   roomAvatar?: string;
-  roomAvatarSettings?: AvatarSettings;
+  roomAvatarSettings?: AvatarSettings | null;
   onBack: () => void;
   onMenuClick?: () => void;
 }
 
 export const ChatHeader: React.FC<ChatHeaderProps> = ({ 
   roomName, 
-  roomAvatar, 
-  roomAvatarSettings,
+  // roomAvatar, 
+  // roomAvatarSettings,
   onBack, 
   onMenuClick 
 }) => {

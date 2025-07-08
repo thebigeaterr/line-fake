@@ -62,13 +62,13 @@ export async function GET() {
     try {
       const data = await fs.readFile(DATA_FILE, 'utf8');
       return NextResponse.json(JSON.parse(data));
-    } catch (error) {
+    } catch {
       // ファイルが存在しない場合はデフォルトデータを作成
       await fs.writeFile(DATA_FILE, JSON.stringify(defaultData, null, 2));
       return NextResponse.json(defaultData);
     }
-  } catch (error) {
-    console.error('Failed to read chat data:', error);
+  } catch (err) {
+    console.error('Failed to read chat data:', err);
     return NextResponse.json({ error: 'Failed to read data' }, { status: 500 });
   }
 }
@@ -82,8 +82,8 @@ export async function POST(request: NextRequest) {
     await fs.writeFile(DATA_FILE, JSON.stringify(data, null, 2));
     
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('Failed to save chat data:', error);
+  } catch (err) {
+    console.error('Failed to save chat data:', err);
     return NextResponse.json({ error: 'Failed to save data' }, { status: 500 });
   }
 }
