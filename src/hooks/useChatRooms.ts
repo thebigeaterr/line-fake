@@ -137,6 +137,8 @@ export const useChatRooms = () => {
   // データをサーバーに保存
   const saveChatRooms = async (rooms: ChatRoomData[]) => {
     console.log('saveChatRooms called with:', rooms.length, 'rooms');
+    console.log('Saving room data:', JSON.stringify(rooms[0], null, 2));
+    
     try {
       const response = await fetch('/api/chat-data', {
         method: 'POST',
@@ -147,11 +149,14 @@ export const useChatRooms = () => {
       });
 
       if (response.ok) {
-        console.log('Data saved to server successfully');
+        const result = await response.json();
+        console.log('Data saved to server successfully:', result);
         // バックアップとしてlocalStorageにも保存
         localStorage.setItem(STORAGE_KEY, JSON.stringify(rooms));
       } else {
-        throw new Error('Failed to save to server');
+        const errorText = await response.text();
+        console.error('Server save failed:', response.status, errorText);
+        throw new Error(`Failed to save to server: ${response.status}`);
       }
     } catch (error) {
       console.error('Failed to save to server:', error);

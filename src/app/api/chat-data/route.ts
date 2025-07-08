@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import fs from 'fs/promises';
-import path from 'path';
 
 // デフォルトデータ
 const defaultData = [
@@ -43,31 +41,6 @@ const defaultData = [
   }
 ];
 
-// ローカル開発用のフォールバック
-async function getLocalData() {
-  const dataDir = path.join(process.cwd(), 'data');
-  const dataFile = path.join(dataDir, 'chat-rooms.json');
-  
-  try {
-    await fs.access(dataDir);
-  } catch {
-    await fs.mkdir(dataDir, { recursive: true });
-  }
-  
-  try {
-    const data = await fs.readFile(dataFile, 'utf8');
-    return JSON.parse(data);
-  } catch {
-    await fs.writeFile(dataFile, JSON.stringify(defaultData, null, 2));
-    return defaultData;
-  }
-}
-
-async function saveLocalData(data: unknown) {
-  const dataDir = path.join(process.cwd(), 'data');
-  const dataFile = path.join(dataDir, 'chat-rooms.json');
-  await fs.writeFile(dataFile, JSON.stringify(data, null, 2));
-}
 
 // GET: データを読み込み
 export async function GET() {
@@ -76,53 +49,53 @@ export async function GET() {
     
     // Supabaseが利用可能な場合
     if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-      try {
-        console.log('Attempting to read from Supabase...');
+      console.log('Attempting to read from Supabase...');
+      
+      // chat_data テーブルからデータを取得
+      const { data, error } = await supabase
+        .from('chat_data')
+        .select('*')
+        .eq('id', 'default')
+        .single();
+      
+      if (error) {
+        console.log('Supabase read error:', error.message);
         
-        // chat_data テーブルからデータを取得
-        const { data, error } = await supabase
-          .from('chat_data')
-          .select('*')
-          .eq('id', 'default')
-          .single();
-        
-        if (error) {
-          console.log('Supabase read error:', error.message);
+        // データが存在しない場合（初回）
+        if (error.code === 'PGRST116') {
+          console.log('No data found, creating default data...');
           
-          // データが存在しない場合（初回）
-          if (error.code === 'PGRST116') {
-            console.log('No data found, creating default data...');
-            
-            // デフォルトデータを挿入
-            const { error: insertError } = await supabase
-              .from('chat_data')
-              .insert([
-                { id: 'default', data: defaultData }
-              ]);
-            
-            if (insertError) {
-              console.error('Failed to insert default data:', insertError);
-              throw insertError;
-            }
-            
-            return NextResponse.json(defaultData);
+          // デフォルトデータを挿入
+          const { error: insertError } = await supabase
+            .from('chat_data')
+            .insert([
+              { id: 'default', data: defaultData }
+            ]);
+          
+          if (insertError) {
+            console.error('Failed to insert default data:', insertError);
+            return NextResponse.json({ 
+              error: 'Failed to create default data', 
+              details: insertError.message 
+            }, { status: 500 });
           }
           
-          throw error;
+          return NextResponse.json(defaultData);
         }
         
-        console.log('Supabase read success');
-        return NextResponse.json(data.data);
-      } catch (supabaseError) {
-        console.error('Supabase error:', supabaseError);
-        // Supabaseエラーの場合はフォールバック
+        return NextResponse.json({ 
+          error: 'Failed to read from Supabase', 
+          details: error.message 
+        }, { status: 500 });
       }
+      
+      console.log('Supabase read success');
+      return NextResponse.json(data.data);
     }
     
-    // ローカル開発環境またはSupabaseが利用できない場合
-    console.log('Using local data fallback');
-    const data = await getLocalData();
-    return NextResponse.json(data);
+    // Supabaseが利用できない場合はデフォルトデータを返す
+    console.log('Supabase not configured - returning default data');
+    return NextResponse.json(defaultData);
   } catch (err) {
     console.error('Failed to read chat data:', err);
     return NextResponse.json({ 
@@ -136,37 +109,59 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const data = await request.json();
-    console.log('POST request - saving data');
+    console.log('POST request - saving data, records:', data.length);
+    
+    // データサイズをチェック
+    const jsonString = JSON.stringify(data);
+    console.log('JSON size:', jsonString.length, 'bytes');
+    
+    // アバターデータを除外して保存
+    const cleanData = data.map((room: any) => ({
+      ...room,
+      messages: room.messages?.map((msg: any) => ({
+        ...msg,
+        avatarSettings: msg.avatarSettings ? {
+          ...msg.avatarSettings,
+          url: msg.avatarSettings.url ? '[LARGE_IMAGE_DATA]' : null
+        } : null
+      }))
+    }));
+    
+    console.log('Cleaned data preview:', JSON.stringify(cleanData[0], null, 2).substring(0, 500));
+    
+    // Supabase環境変数チェック
+    console.log('SUPABASE_URL exists:', !!process.env.NEXT_PUBLIC_SUPABASE_URL);
+    console.log('SUPABASE_ANON_KEY exists:', !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
     
     // Supabaseが利用可能な場合
     if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-      try {
-        console.log('Attempting to save to Supabase...');
-        
-        // データを更新（upsert）
-        const { error } = await supabase
-          .from('chat_data')
-          .upsert([
-            { id: 'default', data: data }
-          ]);
-        
-        if (error) {
-          console.error('Supabase save error:', error);
-          throw error;
-        }
-        
-        console.log('Supabase save success');
-        return NextResponse.json({ success: true });
-      } catch (supabaseError) {
-        console.error('Supabase save error:', supabaseError);
-        // Supabaseエラーの場合はフォールバック
+      console.log('Attempting to save to Supabase...');
+      
+      // データを更新（upsert）- 大きなアバターデータを除外して保存
+      const { error, data: result } = await supabase
+        .from('chat_data')
+        .upsert([
+          { id: 'default', data: cleanData }
+        ]);
+      
+      if (error) {
+        console.error('Supabase save error:', error);
+        return NextResponse.json({ 
+          error: 'Failed to save to Supabase', 
+          details: error.message 
+        }, { status: 500 });
       }
+      
+      console.log('Supabase save success, result:', result);
+      return NextResponse.json({ success: true });
     }
     
-    // ローカル開発環境またはSupabaseが利用できない場合
-    console.log('Using local data fallback for save');
-    await saveLocalData(data);
-    return NextResponse.json({ success: true });
+    // Supabaseが利用できない場合はエラー
+    console.log('Supabase not configured - cannot save data');
+    return NextResponse.json({ 
+      error: 'Database not configured', 
+      details: 'Supabase environment variables not found' 
+    }, { status: 500 });
   } catch (err) {
     console.error('Failed to save chat data:', err);
     return NextResponse.json({ 
