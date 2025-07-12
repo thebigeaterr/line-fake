@@ -71,14 +71,32 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, showAvata
             {message.userName || 'サンプルユーザー'}
           </div>
         )}
-        <div className={`relative max-w-xs lg:max-w-sm px-3 py-1 text-sm leading-relaxed ${
+        <div className={`relative max-w-xs lg:max-w-sm ${
+          message.imageUrl ? '' : 'px-3 py-1'
+        } text-sm leading-relaxed ${
           message.isUser 
             ? 'bg-[#6de67b] text-black rounded-3xl'
             : 'bg-white text-black rounded-3xl border border-gray-200 shadow-sm'
         }`}>
-          <div className="whitespace-pre-wrap break-words">
-            {message.text}
-          </div>
+          {message.imageUrl ? (
+            <div className="overflow-hidden rounded-3xl">
+              <img 
+                src={message.imageUrl} 
+                alt="送信画像" 
+                className="max-w-full h-auto"
+                style={{ maxHeight: '300px' }}
+              />
+              {message.text && message.text.trim() !== ' ' && (
+                <div className="px-3 py-1 whitespace-pre-wrap break-words">
+                  {message.text}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="whitespace-pre-wrap break-words">
+              {message.text}
+            </div>
+          )}
         
         {/* 吹き出しの矢印（showTailがtrueの場合のみ表示） */}
         {!message.isUser && showTail && (

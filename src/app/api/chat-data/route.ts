@@ -96,12 +96,20 @@ export async function POST(request: NextRequest) {
     const data = await request.json();
     console.log('POST request - saving data, records:', data.length);
     
-    // データサイズをチェック
-    const jsonString = JSON.stringify(data);
-    console.log('JSON size:', jsonString.length, 'bytes');
+    // base64画像データを除外してURLのみを保持
+    const cleanData = data.map((room: any) => ({
+      ...room,
+      participants: room.participants?.map((participant: any) => ({
+        ...participant,
+        avatarSettings: participant.avatarSettings?.url 
+          ? { url: participant.avatarSettings.url } 
+          : null
+      }))
+    }));
     
-    // 画像データもそのまま保存
-    const cleanData = data;
+    // データサイズをチェック
+    const jsonString = JSON.stringify(cleanData);
+    console.log('JSON size after cleaning:', jsonString.length, 'bytes');
     
     console.log('Cleaned data preview:', JSON.stringify(cleanData[0], null, 2).substring(0, 500));
     
@@ -113,7 +121,7 @@ export async function POST(request: NextRequest) {
     if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
       console.log('Attempting to save to Supabase...');
       
-      // データを更新（upsert）- 大きなアバターデータを除外して保存
+      // データを更新（upsert）
       const { error, data: result } = await supabase
         .from('chat_data')
         .upsert([

@@ -23,6 +23,7 @@ export default function Home() {
     addMessage, 
     updateChatRoom, 
     resetUnreadCount,
+    isLoading
     // clearAllData 
   } = useChatRooms();
 
@@ -97,6 +98,7 @@ export default function Home() {
             onSelectRoom={handleSelectRoom}
             onCreateRoom={handleCreateRoom}
             onDeleteRoom={handleDeleteRoom}
+            isLoading={isLoading}
           />
         </div>
       ) : viewMode === 'chat' && currentRoom ? (

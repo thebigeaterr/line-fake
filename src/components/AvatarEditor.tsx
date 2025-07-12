@@ -29,9 +29,15 @@ export const AvatarEditor: React.FC<AvatarEditorProps> = ({
     const file = event.target.files?.[0];
     if (file) {
       try {
+        // 動的インポートで圧縮ユーティリティを読み込み
+        const { processImageFile } = await import('@/utils/imageCompression');
+        
+        // 画像を自動圧縮（5MB以下にする）
+        const processedFile = await processImageFile(file, 5);
+        
         // FormDataを作成してファイルを送信
         const formData = new FormData();
-        formData.append('file', file);
+        formData.append('file', processedFile);
         
         // アップロードAPIを呼び出し
         const response = await fetch('/api/upload-avatar', {
@@ -42,15 +48,35 @@ export const AvatarEditor: React.FC<AvatarEditorProps> = ({
         if (!response.ok) {
           const error = await response.json();
           console.error('Upload failed:', error);
-          alert('画像のアップロードに失敗しました');
+          if (error.error === 'File size must be less than 10MB') {
+            alert('ファイルサイズが10MBを超えています。画像を圧縮できませんでした。');
+          } else if (error.error === 'Only image files are allowed') {
+            alert('画像ファイルのみアップロード可能です。');
+          } else {
+            alert(`アップロードに失敗しました: ${error.error}`);
+          }
           return;
         }
         
         const { url } = await response.json();
         console.log('Avatar uploaded successfully:', url);
+        console.log('URL type:', typeof url, 'URL value:', url);
         
-        // Supabase StorageのURLを設定
-        setSettings(prev => ({ ...prev, url }));
+        // 画像が実際に読み込めるかテスト
+        const testImg = new Image();
+        testImg.onload = () => console.log('Image loaded successfully');
+        testImg.onerror = (e) => console.error('Image failed to load:', e);
+        testImg.src = url;
+        
+        // Supabase StorageのURLを設定（デフォルト値も含める）
+        setSettings(prev => ({ 
+          url,
+          scale: prev.scale || 1.0,
+          positionX: prev.positionX || 50,
+          positionY: prev.positionY || 50
+        }));
+        
+        console.log('Settings updated:', { url, scale: 1.0, positionX: 50, positionY: 50 });
       } catch (error) {
         console.error('Upload error:', error);
         alert('画像のアップロードに失敗しました');
@@ -59,9 +85,19 @@ export const AvatarEditor: React.FC<AvatarEditorProps> = ({
   };
 
   const handleSave = () => {
-    if (settings.url) {
-      onSave(settings);
+    console.log('AvatarEditor handleSave - settings:', settings);
+    if (settings.url && settings.url.trim()) {
+      // URLが設定されている場合、完全なアバター設定を保存
+      const completeSettings: AvatarSettings = {
+        url: settings.url,
+        scale: settings.scale || 1.0,
+        positionX: settings.positionX || 50,
+        positionY: settings.positionY || 50
+      };
+      console.log('AvatarEditor handleSave - saving completeSettings:', completeSettings);
+      onSave(completeSettings);
     } else {
+      console.log('AvatarEditor handleSave - no URL, saving null');
       onSave(null);
     }
     onClose();
@@ -91,20 +127,32 @@ export const AvatarEditor: React.FC<AvatarEditorProps> = ({
             プレビュー
           </label>
           <div className="w-20 h-20 rounded-full bg-gray-200 overflow-hidden border-2 border-gray-300 mx-auto">
-            {settings.url ? (
-              <div 
-                className="w-full h-full bg-cover bg-center"
-                style={{
-                  backgroundImage: `url(${settings.url})`,
-                  backgroundSize: `${settings.scale * 100}%`,
-                  backgroundPosition: `${settings.positionX}% ${settings.positionY}%`
-                }}
-              />
-            ) : (
-              <div className="w-full h-full bg-blue-400 flex items-center justify-center text-white text-2xl font-bold">
-                {userName.charAt(0)}
-              </div>
-            )}
+            {(() => {
+              console.log('AvatarEditor Preview - settings:', settings);
+              console.log('AvatarEditor Preview - settings.url exists:', !!settings.url);
+              console.log('AvatarEditor Preview - settings.url value:', settings.url);
+              
+              if (settings.url && settings.url.trim()) {
+                console.log('AvatarEditor Preview - showing image with URL:', settings.url);
+                return (
+                  <div 
+                    className="w-full h-full bg-cover bg-center"
+                    style={{
+                      backgroundImage: `url(${settings.url})`,
+                      backgroundSize: `${settings.scale * 100}%`,
+                      backgroundPosition: `${settings.positionX}% ${settings.positionY}%`
+                    }}
+                  />
+                );
+              } else {
+                console.log('AvatarEditor Preview - showing default avatar');
+                return (
+                  <div className="w-full h-full bg-blue-400 flex items-center justify-center text-white text-2xl font-bold">
+                    {userName.charAt(0)}
+                  </div>
+                );
+              }
+            })()}
           </div>
         </div>
 

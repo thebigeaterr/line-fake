@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
     
-    // ファイルサイズチェック（10MB以下）
+    // ファイルサイズチェック（10MB以下に緩和）
     if (file.size > 10 * 1024 * 1024) {
       return NextResponse.json({ error: 'File size must be less than 10MB' }, { status: 400 });
     }
@@ -22,11 +22,11 @@ export async function POST(request: NextRequest) {
     
     // ファイル名を生成（タイムスタンプ + 元のファイル名）
     const fileName = `${Date.now()}_${file.name}`;
-    const filePath = `avatars/${fileName}`;
+    const filePath = `chat-images/${fileName}`;
     
     // Supabase Storageにアップロード
     const { error } = await supabase.storage
-      .from('avatars')
+      .from('avatars') // 既存のavatarsバケットを使用
       .upload(filePath, file, {
         contentType: file.type,
         upsert: true
@@ -42,9 +42,6 @@ export async function POST(request: NextRequest) {
       .from('avatars')
       .getPublicUrl(filePath);
       
-    console.log('Upload successful - filePath:', filePath);
-    console.log('Upload successful - publicUrl:', publicUrl);
-    
     return NextResponse.json({ 
       url: publicUrl,
       path: filePath

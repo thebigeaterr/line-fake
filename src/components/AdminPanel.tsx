@@ -46,31 +46,45 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       setEditingMessages(messagesWithReadStatus);
     }
     
-    // メッセージから現在のユーザーデータを抽出
+    // 初期ユーザーデータから設定を読み込み（優先）
+    if (initialUserData) {
+      // 相手の名前を設定
+      if (initialUserData.otherUserName) {
+        setOtherUserName(initialUserData.otherUserName as string);
+      }
+      // 相手のアバター設定を設定
+      if (initialUserData.otherAvatarSettings) {
+        setOtherAvatarSettings(initialUserData.otherAvatarSettings as AvatarSettings);
+      }
+      // 自分のアバター設定を設定
+      if (initialUserData.userAvatarSettings) {
+        setUserAvatarSettings(initialUserData.userAvatarSettings as AvatarSettings);
+      }
+      // 参加者情報を設定
+      if (initialUserData.participants) {
+        setParticipants(initialUserData.participants as Array<{id: string; name: string; avatarSettings: AvatarSettings | null}>);
+      }
+      // グループチャット判定を設定
+      if (initialUserData.isGroup !== undefined) {
+        setIsGroupChat(initialUserData.isGroup as boolean);
+      }
+    }
+    
+    // メッセージから現在のユーザーデータを抽出（初期値が無い場合のフォールバック）
     const firstOtherMessage = messages.find(msg => !msg.isUser);
     if (firstOtherMessage) {
-      if (firstOtherMessage.userName) {
+      if (firstOtherMessage.userName && !initialUserData?.otherUserName) {
         setOtherUserName(firstOtherMessage.userName);
       }
-      if (firstOtherMessage.avatarSettings) {
+      if (firstOtherMessage.avatarSettings && !initialUserData?.otherAvatarSettings) {
         setOtherAvatarSettings(firstOtherMessage.avatarSettings);
       }
     }
     
-    // あなたのメッセージからアバター設定を抽出
+    // あなたのメッセージからアバター設定を抽出（初期値が無い場合のフォールバック）
     const firstUserMessage = messages.find(msg => msg.isUser);
-    if (firstUserMessage && firstUserMessage.avatarSettings) {
+    if (firstUserMessage && firstUserMessage.avatarSettings && !initialUserData?.userAvatarSettings) {
       setUserAvatarSettings(firstUserMessage.avatarSettings);
-    }
-
-    // 初期ユーザーデータから参加者情報を設定
-    if (initialUserData) {
-      if (initialUserData.participants) {
-        setParticipants(initialUserData.participants as Array<{id: string; name: string; avatarSettings: AvatarSettings | null}>);
-      }
-      if (initialUserData.isGroup !== undefined) {
-        setIsGroupChat(initialUserData.isGroup as boolean);
-      }
     }
   }, [messages, initialUserData, editingMessages.length]);
 
@@ -475,6 +489,82 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                     placeholder="メッセージを入力..."
                   />
                   
+                  <div className="flex items-center space-x-2">
+                    <label htmlFor={`image-upload-${message.id}`} className="cursor-pointer">
+                      <div className="bg-gray-200 hover:bg-gray-300 px-3 py-2 rounded-lg flex items-center space-x-2 transition-colors">
+                        <IoImage size={20} />
+                        <span className="text-sm">画像を追加</span>
+                      </div>
+                      <input
+                        id={`image-upload-${message.id}`}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            try {
+                              // 動的インポートで圧縮ユーティリティを読み込み
+                              const { processImageFile } = await import('@/utils/imageCompression');
+                              
+                              // 画像を自動圧縮（5MB以下にする）
+                              const processedFile = await processImageFile(file, 5);
+                              
+                              const formData = new FormData();
+                              formData.append('file', processedFile);
+                              
+                              const response = await fetch('/api/upload-image', {
+                                method: 'POST',
+                                body: formData
+                              });
+                              
+                              if (response.ok) {
+                                const { url } = await response.json();
+                                const updatedMessage = {
+                                  ...message,
+                                  imageUrl: url,
+                                  text: editingText || ' ' // 画像のみの場合は空白文字を設定
+                                };
+                                const newMessages = [...editingMessages];
+                                newMessages[index] = updatedMessage;
+                                saveChangesLocally(newMessages);
+                                setEditingMessageId(null);
+                              }
+                            } catch (error) {
+                              console.error('Upload failed:', error);
+                              if (response && !response.ok) {
+                                const errorData = await response.json();
+                                if (errorData.error === 'File size must be less than 10MB') {
+                                  alert('ファイルサイズが10MBを超えています。画像を圧縮できませんでした。');
+                                } else if (errorData.error === 'Only image files are allowed') {
+                                  alert('画像ファイルのみアップロード可能です。');
+                                } else {
+                                  alert(`アップロードに失敗しました: ${errorData.error}`);
+                                }
+                              } else {
+                                alert('画像のアップロードに失敗しました');
+                              }
+                            }
+                          }
+                        }}
+                      />
+                    </label>
+                    {message.imageUrl && (
+                      <button
+                        onClick={() => {
+                          const updatedMessage = { ...message };
+                          delete updatedMessage.imageUrl;
+                          const newMessages = [...editingMessages];
+                          newMessages[index] = updatedMessage;
+                          saveChangesLocally(newMessages);
+                        }}
+                        className="text-red-500 hover:text-red-700 text-sm"
+                      >
+                        画像を削除
+                      </button>
+                    )}
+                  </div>
+                  
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       日時
@@ -501,6 +591,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                     isGroupChat={isGroupChat}
                   />
                 </div>
+                {message.imageUrl && (
+                  <div className="text-xs text-gray-500 ml-2 mt-1">
+                    画像付きメッセージ
+                  </div>
+                )}
               </div>
             )}
             </div>

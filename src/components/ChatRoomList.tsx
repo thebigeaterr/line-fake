@@ -22,6 +22,7 @@ interface ChatRoomListProps {
   onSelectRoom: (roomId: string) => void;
   onCreateRoom: () => void;
   onDeleteRoom: (roomId: string) => void;
+  isLoading?: boolean;
   // onClearAllData?: () => void;
 }
 
@@ -30,6 +31,7 @@ export const ChatRoomList: React.FC<ChatRoomListProps> = ({
   onSelectRoom,
   onCreateRoom,
   onDeleteRoom,
+  isLoading = false,
   // onClearAllData
 }) => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
@@ -83,7 +85,12 @@ export const ChatRoomList: React.FC<ChatRoomListProps> = ({
         <h1 className="text-xl font-semibold text-white">トーク</h1>
         <button
           onClick={onCreateRoom}
-          className="p-2 text-white hover:bg-white/10 rounded-full transition-colors"
+          disabled={isLoading}
+          className={`p-2 rounded-full transition-colors ${
+            isLoading 
+              ? 'text-gray-400 cursor-not-allowed' 
+              : 'text-white hover:bg-white/10'
+          }`}
         >
           <IoAdd size={24} />
         </button>
@@ -91,7 +98,12 @@ export const ChatRoomList: React.FC<ChatRoomListProps> = ({
 
       {/* Chat Room List */}
       <div className="flex-1 overflow-y-auto">
-        {chatRooms.length === 0 ? (
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center h-full text-gray-500">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#06C755] mb-4"></div>
+            <p>読み込み中...</p>
+          </div>
+        ) : chatRooms.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-gray-500">
             <p className="mb-4">トークルームがありません</p>
             <button
@@ -173,7 +185,7 @@ export const ChatRoomList: React.FC<ChatRoomListProps> = ({
                 {/* Delete Button */}
                 <button
                   onClick={(e) => handleDeleteClick(e, room.id)}
-                  className="absolute right-2 top-2 p-1 opacity-0 group-hover:opacity-100 transition-opacity bg-white rounded-full shadow-sm hover:bg-red-50"
+                  className="absolute right-2 top-2 p-1 bg-white rounded-full shadow-sm hover:bg-red-50 border border-gray-200"
                 >
                   <IoTrash size={16} className="text-red-500" />
                 </button>

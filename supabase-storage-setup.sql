@@ -7,7 +7,7 @@
 -- 4. 以下の設定でバケットを作成:
 --    - Name: avatars
 --    - Public bucket: ON（チェックを入れる）
---    - File size limit: 5MB
+--    - File size limit: 10MB
 --    - Allowed MIME types: image/*
 
 -- RLSポリシー（Supabase SQL Editorで実行）
