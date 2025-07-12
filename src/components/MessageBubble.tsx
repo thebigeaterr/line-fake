@@ -83,14 +83,9 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, showAvata
               <img 
                 src={message.imageUrl} 
                 alt="送信画像" 
-                className="max-w-full h-auto"
-                style={{ maxHeight: '300px' }}
+                className="max-w-full h-auto block"
+                style={{ maxHeight: '240px' }}
               />
-              {message.text && message.text.trim() !== ' ' && (
-                <div className="px-3 py-1 whitespace-pre-wrap break-words">
-                  {message.text}
-                </div>
-              )}
             </div>
           ) : (
             <div className="whitespace-pre-wrap break-words">
@@ -98,13 +93,13 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, showAvata
             </div>
           )}
         
-        {/* 吹き出しの矢印（showTailがtrueの場合のみ表示） */}
-        {!message.isUser && showTail && (
+        {/* 吹き出しの矢印（showTailがtrueかつ画像メッセージでない場合のみ表示） */}
+        {!message.isUser && showTail && !message.imageUrl && (
           <div className="absolute left-2 top-[2px] transform -translate-x-[6px]" style={{transform: 'translateX(-6px) rotate(140deg)'}}>
             <div className="w-0 h-0 border-r-[12px] border-r-white border-b-[17px] border-b-transparent"></div>
           </div>
         )}
-        {message.isUser && showTail && (
+        {message.isUser && showTail && !message.imageUrl && (
           <div className="absolute right-2 top-[2px] transform translate-x-[6px]" style={{transform: 'translateX(6px) rotate(-140deg)'}}>
             <div className="w-0 h-0 border-l-[12px] border-l-[#6de67b] border-b-[17px] border-b-transparent"></div>
           </div>
