@@ -97,14 +97,14 @@ export async function POST(request: NextRequest) {
     console.log('POST request - saving data, records:', data.length);
     
     // base64画像データを除外してURLのみを保持
-    const cleanData = data.map((room: any) => ({
+    const cleanData = data.map((room: Record<string, unknown>) => ({
       ...room,
-      participants: room.participants?.map((participant: any) => ({
+      participants: Array.isArray(room.participants) ? room.participants.map((participant: Record<string, unknown>) => ({
         ...participant,
-        avatarSettings: participant.avatarSettings?.url 
-          ? { url: participant.avatarSettings.url } 
+        avatarSettings: participant.avatarSettings && typeof participant.avatarSettings === 'object' && participant.avatarSettings !== null && 'url' in participant.avatarSettings
+          ? { url: (participant.avatarSettings as { url: string }).url } 
           : null
-      }))
+      })) : room.participants
     }));
     
     // データサイズをチェック

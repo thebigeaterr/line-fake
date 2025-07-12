@@ -529,10 +529,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                                 newMessages[index] = updatedMessage;
                                 saveChangesLocally(newMessages);
                                 setEditingMessageId(null);
-                              }
-                            } catch (error) {
-                              console.error('Upload failed:', error);
-                              if (response && !response.ok) {
+                              } else {
                                 const errorData = await response.json();
                                 if (errorData.error === 'File size must be less than 10MB') {
                                   alert('ファイルサイズが10MBを超えています。画像を圧縮できませんでした。');
@@ -541,9 +538,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                                 } else {
                                   alert(`アップロードに失敗しました: ${errorData.error}`);
                                 }
-                              } else {
-                                alert('画像のアップロードに失敗しました');
                               }
+                            } catch (error) {
+                              console.error('Upload failed:', error);
+                              alert('画像のアップロードに失敗しました');
                             }
                           }
                         }}
