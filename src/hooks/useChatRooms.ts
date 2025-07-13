@@ -138,6 +138,7 @@ export const useChatRooms = () => {
     }, 30000); // 30秒ごと
 
     return () => clearInterval(syncInterval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // 自動保存: 2分ごとに定期保存
