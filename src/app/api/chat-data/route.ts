@@ -43,8 +43,22 @@ const defaultData = [
 
 
 // GET: データを読み込み
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    // Check if this is a debug request
+    const url = new URL(request.url);
+    if (url.searchParams.get('debug') === 'true') {
+      return NextResponse.json({
+        status: 'Debug info',
+        environment: {
+          SUPABASE_URL: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+          SUPABASE_KEY: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+          URL_VALUE: process.env.NEXT_PUBLIC_SUPABASE_URL ? 'SET' : 'MISSING',
+          KEY_VALUE: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'SET' : 'MISSING'
+        }
+      });
+    }
+    
     console.log('GET request - checking Supabase connection');
     
     // Supabaseが利用可能な場合
