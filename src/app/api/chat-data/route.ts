@@ -49,29 +49,28 @@ export async function GET(request: NextRequest) {
     const url = new URL(request.url);
     if (url.searchParams.get('debug') === 'true') {
       // Try to fetch actual data from database
-      let dbStatus = 'Not checked';
+      let dbStatus = 'Starting check';
       let dbData = null;
       let dbError = null;
       
-      if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-        try {
-          const { data, error } = await supabase
-            .from('chat_data')
-            .select('*')
-            .eq('id', 'default')
-            .single();
-          
-          if (error) {
-            dbStatus = 'Error';
-            dbError = error.message;
-          } else {
-            dbStatus = 'Connected';
-            dbData = data ? 'Data exists' : 'No data';
-          }
-        } catch (e) {
-          dbStatus = 'Exception';
-          dbError = e instanceof Error ? e.message : 'Unknown error';
+      // Always try to connect regardless of env check
+      try {
+        const { data, error } = await supabase
+          .from('chat_data')
+          .select('*')
+          .eq('id', 'default')
+          .single();
+        
+        if (error) {
+          dbStatus = 'Error';
+          dbError = error.message;
+        } else {
+          dbStatus = 'Connected';
+          dbData = data ? 'Data exists' : 'No data';
         }
+      } catch (e) {
+        dbStatus = 'Exception';
+        dbError = e instanceof Error ? e.message : 'Unknown error';
       }
       
       return NextResponse.json({
