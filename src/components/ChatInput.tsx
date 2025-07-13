@@ -34,7 +34,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, disabled = 
         
         {/* Plus icon */}
         <div className="w-7 h-7 flex items-center justify-center">
-          <svg width="26" height="26" viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="1.3" className="text-gray-600">
+          <svg width="26" height="26" viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="1.3" className="text-black">
             <line x1="11" y1="2.5" x2="11" y2="19.5"/>
             <line x1="2.5" y1="11" x2="19.5" y2="11"/>
           </svg>
@@ -45,7 +45,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, disabled = 
         
         {/* Camera icon */}
         <div className="w-7 h-7 flex items-center justify-center">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" className="text-gray-600">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" className="text-black">
             <path d="M3 7.25v12.5a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7.25a2 2 0 0 0-2-2H15l-1-1a1 1 0 0 0-1 0h-2a1 1 0 0 0-1 0l-1 1H5a2 2 0 0 0-2 2z"/>
             <circle cx="12" cy="13.5" r="3.5"/>
           </svg>
@@ -56,7 +56,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, disabled = 
         
         {/* Image icon */}
         <div className="w-7 h-7 flex items-center justify-center">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" className="text-gray-600">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" className="text-black">
             <rect x="3" y="3.5" width="18" height="18" rx="2"/>
             <path d="M3 13.5l5-4 5 6 4-3 4 4"/>
           </svg>
@@ -66,7 +66,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, disabled = 
         <div className="w-3"></div>
         
         {/* Center input area */}
-        <div className="flex-1 flex items-center bg-gray-100 rounded-3xl px-3" style={{height: '1.75rem'}}>
+        <div className="flex-1 flex items-center bg-gray-100 rounded-3xl px-3" style={{height: '34px'}}>
           <span className="text-gray-300 text-sm mr-2">Aa</span>
           <form onSubmit={handleSubmit} className="flex-1">
             <textarea
@@ -78,7 +78,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, disabled = 
               rows={1}
               disabled={disabled}
               style={{ 
-                minHeight: '1.75rem', 
+                minHeight: '34px', 
                 maxHeight: '7.5rem',
                 lineHeight: '1.4'
               }}
@@ -100,7 +100,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, disabled = 
           {message.trim() ? (
             <IoSend size={22} className="text-blue-500" onClick={handleSubmit} />
           ) : (
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" className="text-gray-600">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" className="text-black">
               <rect x="9" y="3" width="6" height="11" rx="3"/>
               <path d="M5 11c0 3.9 3.1 7 7 7s7-3.1 7-7"/>
               <path d="M12 18v3"/>
