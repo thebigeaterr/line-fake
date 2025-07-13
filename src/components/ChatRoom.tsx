@@ -101,7 +101,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
       <div 
         ref={messagesContainerRef}
         data-chat-container
-        className="flex-1 overflow-y-auto px-4 py-6"
+        className="flex-1 overflow-y-auto px-2 py-6"
         style={{ scrollBehavior: 'smooth' }}
       >
         {messages.map((message, index) => (

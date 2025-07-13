@@ -20,7 +20,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
   onMenuClick 
 }) => {
   return (
-    <div className="bg-[#8cabd8]/50 backdrop-blur-sm px-3 py-3 flex items-center justify-between">
+    <div className="bg-[#8cabd8]/50 backdrop-blur-sm py-3 flex items-center justify-between" style={{ paddingLeft: '15px', paddingRight: '15px' }}>
       <div className="flex items-center space-x-1">
         <button
           onClick={onBack}
@@ -30,7 +30,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
         </button>
         
         <div>
-          <h2 className="text-sm font-semibold text-black">{roomName}</h2>
+          <h2 className="font-semibold text-black" style={{ fontSize: '16px' }}>{roomName}</h2>
         </div>
       </div>
       

@@ -27,7 +27,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, disabled = 
   };
 
   return (
-    <div className="bg-white pt-3 pb-5">
+    <div className="bg-white" style={{ height: '85px', paddingTop: '9px' }}>
       <div className="flex items-center w-full max-w-md mx-auto">
         {/* Spacer */}
         <div className="w-3"></div>

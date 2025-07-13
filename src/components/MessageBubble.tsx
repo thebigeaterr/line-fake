@@ -23,7 +23,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, showAvata
   }, [message.timestamp]);
 
   return (
-    <div className={`flex mb-[7px] items-start ${message.isUser ? 'justify-end' : 'justify-start'}`}>
+    <div className={`flex mb-1.5 items-start ${message.isUser ? 'justify-end' : 'justify-start'}`}>
       {!message.isUser && showAvatar && (
         <div className="w-7 h-7 rounded-full bg-gray-300 flex-shrink-0 mr-3 overflow-hidden -mt-1">
           {message.avatarSettings?.url ? (
@@ -52,13 +52,13 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, showAvata
       
       {/* 自分のメッセージの場合、左側に時刻と既読を表示 */}
       {message.isUser && (
-        <div className="flex flex-col items-end mr-2 self-end -space-y-1">
+        <div className="flex flex-col items-end" style={{ alignSelf: 'flex-end', marginBottom: '6px', marginRight: '5px' }}>
           {message.isRead && (
-            <div className="text-[10px] text-gray-500">
+            <div className="text-gray-500" style={{ fontSize: '9px', lineHeight: '1', marginBottom: '3px' }}>
               既読
             </div>
           )}
-          <div className="text-[10px] text-gray-500">
+          <div className="text-gray-500" style={{ fontSize: '9px', lineHeight: '1' }}>
             {formattedTime}
           </div>
         </div>
@@ -72,12 +72,12 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, showAvata
           </div>
         )}
         <div className={`relative max-w-xs lg:max-w-sm ${
-          message.imageUrl ? '' : 'px-3 py-1'
-        } text-sm leading-relaxed ${
+          message.imageUrl ? '' : ''
+        } leading-relaxed ${
           message.isUser 
             ? 'bg-[#6de67b] text-black rounded-3xl'
             : 'bg-white text-black rounded-3xl border border-gray-200 shadow-sm'
-        }`}>
+        }`} style={{ fontSize: '15px', padding: message.imageUrl ? '0' : '12px 15px' }}>
           {message.imageUrl ? (
             <div className="overflow-hidden rounded-3xl">
               <img 
@@ -109,8 +109,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, showAvata
       
       {/* 相手のメッセージの場合、右側に時刻を表示 */}
       {!message.isUser && (
-        <div className="flex flex-col ml-2 self-end">
-          <div className="text-[10px] text-gray-500">
+        <div className="flex flex-col" style={{ alignSelf: 'flex-end', marginBottom: '6px', marginLeft: '5px' }}>
+          <div className="text-gray-500" style={{ fontSize: '9px', lineHeight: '1' }}>
             {formattedTime}
           </div>
         </div>
