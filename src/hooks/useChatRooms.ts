@@ -96,6 +96,42 @@ export const useChatRooms = () => {
 
   useEffect(() => {
     loadDataFromServer();
+    
+    // 他の端末の変更を検知するため30秒ごとにサーバーデータを確認
+    const syncInterval = setInterval(async () => {
+      try {
+        const response = await fetch('/api/chat-data');
+        if (response.ok) {
+          const serverData = await response.json();
+          if (serverData && Array.isArray(serverData)) {
+            // 現在の状態を取得するため関数型更新を使用
+            setChatRooms(currentRooms => {
+              const currentDataString = JSON.stringify(currentRooms);
+              const serverDataString = JSON.stringify(serverData);
+              
+              if (currentDataString !== serverDataString) {
+                console.log('Server data changed, syncing...');
+                const restoredData = serverData.map((room: Record<string, unknown>) => ({
+                  ...room,
+                  lastMessageTime: room.lastMessageTime ? new Date(room.lastMessageTime as string) : undefined,
+                  messages: (room.messages as Record<string, unknown>[]).map((msg: Record<string, unknown>) => ({
+                    ...msg,
+                    timestamp: new Date(msg.timestamp as string)
+                  }))
+                }));
+                console.log('Synced with server data');
+                return restoredData;
+              }
+              return currentRooms; // 変更なしの場合は現在の状態を維持
+            });
+          }
+        }
+      } catch (error) {
+        console.log('Sync check failed:', error);
+      }
+    }, 30000); // 30秒ごと
+
+    return () => clearInterval(syncInterval);
   }, []);
 
   // 自動保存: 2分ごとに定期保存
