@@ -17,14 +17,14 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
   onMenuClick 
 }) => {
   return (
-    <div className="bg-[#8cabd8]/50 backdrop-blur-sm py-3 flex items-center justify-between" style={{ paddingLeft: '0.9375rem', paddingRight: '0.9375rem' }}>
-      <div className="flex items-center space-x-1">
+    <div className="bg-[#8cabd8]/50 backdrop-blur-sm py-3 flex items-center justify-between" style={{ paddingLeft: '0', paddingRight: '0.9375rem' }}>
+      <div className="flex items-center">
         <button
           onClick={onBack}
           className="text-black hover:text-gray-600"
-          style={{ width: '11px', height: '20px', padding: 0, marginLeft: '16px' }}
+          style={{ width: '10px', height: '18px', padding: 0, marginLeft: '16px', border: 'none', background: 'transparent' }}
         >
-          <img src="/back-icon.svg" alt="戻る" width={11} height={20} />
+          <img src="/back-icon.svg" alt="戻る" style={{ width: '10px !important', height: '18px !important', display: 'block' }} />
         </button>
         
         <div style={{ marginLeft: '16px' }}>
