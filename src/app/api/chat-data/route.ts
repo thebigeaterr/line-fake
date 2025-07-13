@@ -48,6 +48,32 @@ export async function GET(request: NextRequest) {
     // Check if this is a debug request
     const url = new URL(request.url);
     if (url.searchParams.get('debug') === 'true') {
+      // Try to fetch actual data from database
+      let dbStatus = 'Not checked';
+      let dbData = null;
+      let dbError = null;
+      
+      if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+        try {
+          const { data, error } = await supabase
+            .from('chat_data')
+            .select('*')
+            .eq('id', 'default')
+            .single();
+          
+          if (error) {
+            dbStatus = 'Error';
+            dbError = error.message;
+          } else {
+            dbStatus = 'Connected';
+            dbData = data ? 'Data exists' : 'No data';
+          }
+        } catch (e) {
+          dbStatus = 'Exception';
+          dbError = e instanceof Error ? e.message : 'Unknown error';
+        }
+      }
+      
       return NextResponse.json({
         status: 'Debug info',
         environment: {
@@ -55,6 +81,11 @@ export async function GET(request: NextRequest) {
           SUPABASE_KEY: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
           URL_VALUE: process.env.NEXT_PUBLIC_SUPABASE_URL ? 'SET' : 'MISSING',
           KEY_VALUE: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'SET' : 'MISSING'
+        },
+        database: {
+          status: dbStatus,
+          data: dbData,
+          error: dbError
         }
       });
     }
