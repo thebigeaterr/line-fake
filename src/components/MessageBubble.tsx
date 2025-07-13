@@ -73,11 +73,11 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, showAvata
         )}
         <div className={`relative max-w-xs lg:max-w-sm ${
           message.imageUrl ? '' : ''
-        } leading-relaxed ${
+        } ${
           message.isUser 
             ? 'bg-[#6de67b] text-black rounded-3xl'
             : 'bg-white text-black rounded-3xl border border-gray-200 shadow-sm'
-        }`} style={{ fontSize: '0.9375rem', padding: message.imageUrl ? '0' : '0.75rem 0.9375rem' }}>
+        }`} style={{ fontSize: '0.9375rem', padding: message.imageUrl ? '0' : '0.5rem 0.9375rem', lineHeight: '1.2' }}>
           {message.imageUrl ? (
             <div className="overflow-hidden rounded-3xl">
               <img 
