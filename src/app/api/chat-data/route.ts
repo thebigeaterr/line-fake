@@ -43,7 +43,7 @@ const defaultData = [
 
 
 // GET: データを読み込み
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
     // Check if this is a debug request
     const url = new URL(request.url);

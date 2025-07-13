@@ -111,14 +111,14 @@ export const useChatRooms = () => {
               
               if (currentDataString !== serverDataString) {
                 console.log('Server data changed, syncing...');
-                const restoredData = serverData.map((room: Record<string, unknown>) => ({
+                const restoredData: ChatRoomData[] = serverData.map((room: Record<string, unknown>) => ({
                   ...room,
                   lastMessageTime: room.lastMessageTime ? new Date(room.lastMessageTime as string) : undefined,
                   messages: (room.messages as Record<string, unknown>[]).map((msg: Record<string, unknown>) => ({
                     ...msg,
                     timestamp: new Date(msg.timestamp as string)
                   }))
-                }));
+                } as ChatRoomData));
                 console.log('Synced with server data');
                 return restoredData;
               }
