@@ -63,8 +63,9 @@ export const useChatRooms = () => {
         }));
         setChatRooms(restoredData);
       } else {
-        // サーバーからデータが取得できなかった場合はデフォルトデータを使用
-        setChatRooms([defaultChatRoom]);
+        // サーバーからデータが取得できなかった場合
+        console.log('Server returned non-OK status, skipping default data');
+        // デフォルトデータは設定しない - 既存の状態を維持
       }
     } catch (error) {
       console.error('Failed to load chat data from server:', error);
@@ -84,11 +85,16 @@ export const useChatRooms = () => {
           setChatRooms(restoredData);
         } catch (error) {
           console.error('Failed to parse saved chat rooms:', error);
-          setChatRooms([defaultChatRoom]);
+          // パースエラーの場合のみデフォルトデータを使用
+          if (chatRooms.length === 0) {
+            setChatRooms([defaultChatRoom]);
+          }
         }
       } else {
-        // ローカルストレージにもデータがない場合
-        setChatRooms([defaultChatRoom]);
+        // ローカルストレージにもデータがない場合のみデフォルトデータを使用
+        if (chatRooms.length === 0) {
+          setChatRooms([defaultChatRoom]);
+        }
       }
     }
     setIsLoading(false);
@@ -378,6 +384,13 @@ export const useChatRooms = () => {
     }
   };
 
+  // 手動でサーバーからデータを再読み込み
+  const reloadFromServer = async () => {
+    console.log('Manual reload triggered');
+    setIsLoading(true);
+    await loadDataFromServer();
+  };
+
   return {
     chatRooms,
     currentRoomId,
@@ -389,6 +402,7 @@ export const useChatRooms = () => {
     updateChatRoom,
     resetUnreadCount,
     clearAllData,
-    isLoading
+    isLoading,
+    reloadFromServer
   };
 };

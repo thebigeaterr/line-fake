@@ -23,7 +23,8 @@ export default function Home() {
     addMessage, 
     updateChatRoom, 
     resetUnreadCount,
-    isLoading
+    isLoading,
+    reloadFromServer
     // clearAllData 
   } = useChatRooms();
 
