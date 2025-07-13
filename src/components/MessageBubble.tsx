@@ -71,35 +71,46 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, showAvata
             {message.userName || 'サンプルユーザー'}
           </div>
         )}
-        <div className={`relative max-w-xs lg:max-w-sm ${
-          message.imageUrl ? '' : ''
+        <div className={`relative ${
+          message.imageUrl && message.isStamp ? '' : ''
         } ${
-          message.isUser 
-            ? 'bg-[#6de67b] text-black rounded-3xl'
-            : 'bg-white text-black rounded-3xl border border-gray-200 shadow-sm'
-        }`} style={{ fontSize: '0.9375rem', padding: message.imageUrl ? '0' : '0.5rem 0.9375rem', lineHeight: '1.2' }}>
+          message.imageUrl && message.isStamp ? '' : (
+            message.isUser 
+              ? 'bg-[#6de67b] text-black rounded-3xl'
+              : 'bg-white text-black rounded-3xl border border-gray-200 shadow-sm'
+          )
+        }`} style={{ 
+          fontSize: '0.9375rem', 
+          padding: message.imageUrl ? '0' : '0.5rem 0.9375rem', 
+          lineHeight: '1.2',
+          maxWidth: message.imageUrl && message.isStamp ? 'none' : '251px',
+          textAlign: 'left',
+          whiteSpace: message.imageUrl ? 'normal' : 'pre-wrap',
+          wordBreak: message.imageUrl ? 'normal' : 'break-word'
+        }}>
           {message.imageUrl ? (
-            <div className="overflow-hidden rounded-3xl">
+            <div className={message.isStamp ? "" : "overflow-hidden rounded-3xl"}>
               <img 
                 src={message.imageUrl} 
-                alt="送信画像" 
-                className="max-w-full h-auto block"
-                style={{ maxHeight: '15rem' }}
+                alt={message.isStamp ? "スタンプ" : "送信画像"} 
+                className="block"
+                style={message.isStamp ? 
+                  { width: '410px', height: '355px', objectFit: 'contain' } : 
+                  { maxWidth: '100%', height: 'auto', maxHeight: '15rem' }
+                }
               />
             </div>
           ) : (
-            <div className="whitespace-pre-wrap break-words">
-              {message.text}
-            </div>
+            message.text
           )}
         
-        {/* 吹き出しの矢印（showTailがtrueかつ画像メッセージでない場合のみ表示） */}
-        {!message.isUser && showTail && !message.imageUrl && (
+        {/* 吹き出しの矢印（showTailがtrueかつ画像メッセージでない場合、またはスタンプでない場合のみ表示） */}
+        {!message.isUser && showTail && (!message.imageUrl || !message.isStamp) && (
           <div className="absolute left-2 top-[2px] transform -translate-x-[6px]" style={{transform: 'translateX(-6px) rotate(140deg)'}}>
             <div className="w-0 h-0 border-r-[12px] border-r-white border-b-[17px] border-b-transparent"></div>
           </div>
         )}
-        {message.isUser && showTail && !message.imageUrl && (
+        {message.isUser && showTail && (!message.imageUrl || !message.isStamp) && (
           <div className="absolute right-2 top-[2px] transform translate-x-[6px]" style={{transform: 'translateX(6px) rotate(-140deg)'}}>
             <div className="w-0 h-0 border-l-[12px] border-l-[#6de67b] border-b-[17px] border-b-transparent"></div>
           </div>

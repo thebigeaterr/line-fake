@@ -16,6 +16,7 @@ export interface Message {
   isRead?: boolean; // 既読状態
   userId?: string; // ユーザーを識別するID
   imageUrl?: string; // 画像メッセージのURL
+  isStamp?: boolean; // スタンプかどうか
 }
 
 export interface User {

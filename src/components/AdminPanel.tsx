@@ -33,6 +33,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   // const [editingParticipantId, setEditingParticipantId] = useState<string | null>(null);
   const [showSaveConfirm, setShowSaveConfirm] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  const [isStampMode, setIsStampMode] = useState<{[key: string]: boolean}>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -490,10 +491,34 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   />
                   
                   <div className="flex items-center space-x-2">
+                    {/* 画像/スタンプ切り替えボタン */}
+                    <div className="flex bg-gray-100 rounded-lg p-1">
+                      <button
+                        onClick={() => setIsStampMode(prev => ({...prev, [message.id]: false}))}
+                        className={`px-3 py-1 rounded text-sm transition-colors ${
+                          !isStampMode[message.id] 
+                            ? 'bg-white shadow text-black' 
+                            : 'text-gray-600 hover:text-black'
+                        }`}
+                      >
+                        画像
+                      </button>
+                      <button
+                        onClick={() => setIsStampMode(prev => ({...prev, [message.id]: true}))}
+                        className={`px-3 py-1 rounded text-sm transition-colors ${
+                          isStampMode[message.id] 
+                            ? 'bg-white shadow text-black' 
+                            : 'text-gray-600 hover:text-black'
+                        }`}
+                      >
+                        スタンプ
+                      </button>
+                    </div>
+                    
                     <label htmlFor={`image-upload-${message.id}`} className="cursor-pointer">
                       <div className="bg-gray-200 hover:bg-gray-300 px-3 py-2 rounded-lg flex items-center space-x-2 transition-colors">
                         <IoImage size={20} />
-                        <span className="text-sm">画像を追加</span>
+                        <span className="text-sm">{isStampMode[message.id] ? 'スタンプを追加' : '画像を追加'}</span>
                       </div>
                       <input
                         id={`image-upload-${message.id}`}
@@ -523,6 +548,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                                 const updatedMessage = {
                                   ...message,
                                   imageUrl: url,
+                                  isStamp: isStampMode[message.id] || false,
                                   text: editingText || ' ' // 画像のみの場合は空白文字を設定
                                 };
                                 const newMessages = [...editingMessages];
