@@ -184,12 +184,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true });
     }
     
-    // Supabaseが利用できない場合はエラー
-    console.log('Supabase not configured - cannot save data');
+    // Supabaseが利用できない場合は成功として扱う（クライアント側でlocalStorageに保存される）
+    console.log('Supabase not configured - data will be saved to localStorage on client');
     return NextResponse.json({ 
-      error: 'Database not configured', 
-      details: 'Supabase environment variables not found' 
-    }, { status: 500 });
+      success: true, 
+      message: 'Database not configured, using localStorage fallback' 
+    });
   } catch (err) {
     console.error('Failed to save chat data:', err);
     return NextResponse.json({ 

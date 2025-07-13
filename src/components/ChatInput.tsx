@@ -27,7 +27,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, disabled = 
   };
 
   return (
-    <div className="bg-white" style={{ height: '85px', paddingTop: '9px' }}>
+    <div className="bg-white" style={{ height: '5.3125rem', paddingTop: '0.5625rem' }}>
       <div className="flex items-center w-full max-w-md mx-auto">
         {/* Spacer */}
         <div className="w-3"></div>
@@ -66,7 +66,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, disabled = 
         <div className="w-3"></div>
         
         {/* Center input area */}
-        <div className="flex-1 flex items-center bg-gray-100 rounded-3xl px-3" style={{height: '28px'}}>
+        <div className="flex-1 flex items-center bg-gray-100 rounded-3xl px-3" style={{height: '1.75rem'}}>
           <span className="text-gray-300 text-sm mr-2">Aa</span>
           <form onSubmit={handleSubmit} className="flex-1">
             <textarea
@@ -78,8 +78,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, disabled = 
               rows={1}
               disabled={disabled}
               style={{ 
-                minHeight: '28px', 
-                maxHeight: '120px',
+                minHeight: '1.75rem', 
+                maxHeight: '7.5rem',
                 lineHeight: '1.4'
               }}
             />
