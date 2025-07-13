@@ -95,7 +95,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, showAvata
                 alt={message.isStamp ? "スタンプ" : "送信画像"} 
                 className="block"
                 style={message.isStamp ? 
-                  { width: '410px', height: '355px', objectFit: 'contain' } : 
+                  { width: '183px', height: '158px', objectFit: 'fill' } : 
                   { maxWidth: '100%', height: 'auto', maxHeight: '15rem' }
                 }
               />
