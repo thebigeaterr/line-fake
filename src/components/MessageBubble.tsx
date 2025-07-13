@@ -25,7 +25,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, showAvata
   return (
     <div className={`flex mb-1.5 items-start ${message.isUser ? 'justify-end' : 'justify-start'}`}>
       {!message.isUser && showAvatar && (
-        <div className="w-7 h-7 rounded-full bg-gray-300 flex-shrink-0 mr-3 overflow-hidden -mt-1">
+        <div className="rounded-full bg-gray-300 flex-shrink-0 overflow-hidden" style={{ width: '30px', height: '30px', marginRight: '12px', marginTop: '-4px' }}>
           {message.avatarSettings?.url ? (
             <div 
               className="w-full h-full bg-cover bg-center"
@@ -47,7 +47,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, showAvata
       
       {/* アバターがない場合のスペーサー */}
       {!message.isUser && !showAvatar && (
-        <div className="w-7 mr-3"></div>
+        <div style={{ width: '30px', marginRight: '12px' }}></div>
       )}
       
       {/* 自分のメッセージの場合、左側に時刻と既読を表示 */}

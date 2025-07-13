@@ -1,7 +1,4 @@
 import React from 'react';
-import { IoChevronBack } from 'react-icons/io5';
-import { HiOutlinePhone } from 'react-icons/hi';
-import { RxHamburgerMenu } from 'react-icons/rx';
 import { AvatarSettings } from '@/types/message';
 
 interface ChatHeaderProps {
@@ -24,33 +21,30 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
       <div className="flex items-center space-x-1">
         <button
           onClick={onBack}
-          className="p-1 text-black hover:text-gray-600"
+          className="text-black hover:text-gray-600"
+          style={{ width: '11px', height: '20px', padding: 0, marginLeft: '16px' }}
         >
-          <IoChevronBack size={24} />
+          <img src="/back-icon.svg" alt="戻る" width={11} height={20} />
         </button>
         
-        <div>
+        <div style={{ marginLeft: '16px' }}>
           <h2 className="font-semibold text-black" style={{ fontSize: '1rem' }}>{roomName}</h2>
         </div>
       </div>
       
-      <div className="flex items-center space-x-1">
-        <button className="p-2 text-black hover:text-gray-600">
-          <svg width="19.5" height="19.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-            <circle cx="11" cy="11" r="8"/>
-            <path d="m21 21-4.35-4.35"/>
-            <path d="M11 11v-4"/>
-            <path d="M11 11l3.3 2.6"/>
-          </svg>
+      <div className="flex items-center" style={{ gap: '16px' }}>
+        <button className="text-black hover:text-gray-600" style={{ width: '20px', height: '20px', padding: 0 }}>
+          <img src="/search-icon.svg" alt="検索" width={20} height={20} />
         </button>
-        <button className="p-2 text-black hover:text-gray-600">
-          <HiOutlinePhone size={20} strokeWidth={1.5} />
+        <button className="text-black hover:text-gray-600" style={{ width: '19px', height: '19px', padding: 0 }}>
+          <img src="/phone-icon.svg" alt="電話" width={19} height={19} />
         </button>
         <button 
           onClick={onMenuClick}
-          className="p-2 text-black hover:text-gray-600"
+          className="text-black hover:text-gray-600"
+          style={{ width: '16px', height: '16px', padding: 0 }}
         >
-          <RxHamburgerMenu size={20} />
+          <img src="/menu-icon.svg" alt="メニュー" width={16} height={16} />
         </button>
       </div>
     </div>
