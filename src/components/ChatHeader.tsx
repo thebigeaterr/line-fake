@@ -32,7 +32,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
         </div>
       </div>
       
-      <div className="flex items-center" style={{ gap: '16px' }}>
+      <div className="flex items-center" style={{ gap: '20px' }}>
         <button className="text-black hover:text-gray-600" style={{ width: '20px', height: '20px', padding: 0 }}>
           <img src="/search-icon.svg" alt="検索" width={20} height={20} />
         </button>
