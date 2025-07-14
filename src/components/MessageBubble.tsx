@@ -25,8 +25,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, showAvata
   // 日付セパレーターの場合は特別な表示
   if (message.isDateSeparator) {
     return (
-      <div className="flex justify-center my-4">
-        <div className="bg-[#768FB7] text-white rounded-full" style={{ fontSize: '10px', paddingLeft: '9px', paddingRight: '9px', paddingTop: '6px', paddingBottom: '6px' }}>
+      <div className="flex justify-center" style={{ marginTop: '8px', marginBottom: '8px' }}>
+        <div className="bg-[#768FB7] text-white rounded-full" style={{ fontSize: '10px', paddingLeft: '9px', paddingRight: '9px', paddingTop: '4px', paddingBottom: '4px' }}>
           {message.text}
         </div>
       </div>
