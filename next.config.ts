@@ -7,7 +7,7 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        source: '/',
+        source: '/(.*)',
         headers: [
           {
             key: 'Cache-Control',
@@ -33,6 +33,15 @@ const nextConfig: NextConfig = {
           {
             key: 'Service-Worker-Allowed',
             value: '/',
+          },
+        ],
+      },
+      {
+        source: '/_next/static/(.*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-cache, no-store, must-revalidate',
           },
         ],
       },

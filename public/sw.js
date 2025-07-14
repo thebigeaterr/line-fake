@@ -1,6 +1,5 @@
 const CACHE_NAME = 'line-chat-v' + Date.now();
 const urlsToCache = [
-  '/',
   '/manifest.json',
   '/icon.svg'
 ];
@@ -17,6 +16,12 @@ self.addEventListener('install', (event) => {
   );
 });
 
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
 self.addEventListener('fetch', (event) => {
   // Skip non-GET requests
   if (event.request.method !== 'GET') {
@@ -29,22 +34,12 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // For HTML pages, use network-first strategy
+  // For HTML pages, always use network-only strategy
   if (url.pathname === '/' || url.pathname.endsWith('.html')) {
     event.respondWith(
       fetch(event.request)
-        .then((response) => {
-          if (response.status === 200) {
-            const responseToCache = response.clone();
-            caches.open(CACHE_NAME)
-              .then((cache) => {
-                cache.put(event.request, responseToCache);
-              });
-          }
-          return response;
-        })
         .catch(() => {
-          return caches.match(event.request);
+          return new Response('Offline', { status: 503 });
         })
     );
     return;

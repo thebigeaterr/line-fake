@@ -46,42 +46,67 @@ export default function RootLayout({
         <script
           dangerouslySetInnerHTML={{
             __html: `
+              // Clear all caches immediately on page load
+              if ('caches' in window) {
+                caches.keys().then(function(names) {
+                  for (let name of names) {
+                    caches.delete(name);
+                  }
+                });
+              }
+              
               if ('serviceWorker' in navigator) {
                 window.addEventListener('load', function() {
-                  navigator.serviceWorker.register('/sw.js')
-                    .then(function(registration) {
-                      console.log('ServiceWorker registration successful');
-                      
-                      // Check for updates every 60 seconds
-                      setInterval(function() {
-                        registration.update();
-                      }, 60000);
-                      
-                      // Handle updates
-                      registration.addEventListener('updatefound', function() {
-                        const newWorker = registration.installing;
-                        if (newWorker) {
-                          newWorker.addEventListener('statechange', function() {
-                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                              // New content is available, force reload
-                              if (confirm('新しいバージョンが利用可能です。アプリを更新しますか？')) {
-                                window.location.reload();
-                              }
-                            }
-                          });
-                        }
-                      });
-                    })
-                    .catch(function(error) {
-                      console.log('ServiceWorker registration failed: ', error);
+                  // Unregister all existing service workers first
+                  navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                    for(let registration of registrations) {
+                      registration.unregister();
+                    }
+                  }).then(function() {
+                    // Register new service worker
+                    return navigator.serviceWorker.register('/sw.js?v=' + Date.now());
+                  }).then(function(registration) {
+                    console.log('ServiceWorker registration successful');
+                    
+                    // Force immediate activation
+                    if (registration.waiting) {
+                      registration.waiting.postMessage({type: 'SKIP_WAITING'});
+                    }
+                    
+                    // Check for updates every 30 seconds
+                    setInterval(function() {
+                      registration.update();
+                    }, 30000);
+                    
+                    // Handle updates
+                    registration.addEventListener('updatefound', function() {
+                      const newWorker = registration.installing;
+                      if (newWorker) {
+                        newWorker.addEventListener('statechange', function() {
+                          if (newWorker.state === 'installed') {
+                            // Force reload without confirmation
+                            window.location.reload(true);
+                          }
+                        });
+                      }
                     });
+                  }).catch(function(error) {
+                    console.log('ServiceWorker registration failed: ', error);
+                  });
                 });
                 
                 // Listen for controllerchange event
                 navigator.serviceWorker.addEventListener('controllerchange', function() {
-                  window.location.reload();
+                  window.location.reload(true);
                 });
               }
+              
+              // Force reload on page visibility change
+              document.addEventListener('visibilitychange', function() {
+                if (!document.hidden) {
+                  window.location.reload(true);
+                }
+              });
             `,
           }}
         />
