@@ -73,19 +73,21 @@ export default function RootLayout({
                       registration.waiting.postMessage({type: 'SKIP_WAITING'});
                     }
                     
-                    // Check for updates every 30 seconds
+                    // Check for updates every 5 minutes
                     setInterval(function() {
                       registration.update();
-                    }, 30000);
+                    }, 300000);
                     
                     // Handle updates
                     registration.addEventListener('updatefound', function() {
                       const newWorker = registration.installing;
                       if (newWorker) {
                         newWorker.addEventListener('statechange', function() {
-                          if (newWorker.state === 'installed') {
-                            // Force reload without confirmation
-                            window.location.reload(true);
+                          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            // Force reload without confirmation only if there's an existing controller
+                            setTimeout(function() {
+                              window.location.reload(true);
+                            }, 1000);
                           }
                         });
                       }
@@ -101,12 +103,6 @@ export default function RootLayout({
                 });
               }
               
-              // Force reload on page visibility change
-              document.addEventListener('visibilitychange', function() {
-                if (!document.hidden) {
-                  window.location.reload(true);
-                }
-              });
             `,
           }}
         />
