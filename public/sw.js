@@ -1,4 +1,4 @@
-const CACHE_NAME = 'line-chat-v3';
+const CACHE_NAME = 'line-chat-v' + Date.now();
 const urlsToCache = [
   '/',
   '/manifest.json',
@@ -29,6 +29,28 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // For HTML pages, use network-first strategy
+  if (url.pathname === '/' || url.pathname.endsWith('.html')) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          if (response.status === 200) {
+            const responseToCache = response.clone();
+            caches.open(CACHE_NAME)
+              .then((cache) => {
+                cache.put(event.request, responseToCache);
+              });
+          }
+          return response;
+        })
+        .catch(() => {
+          return caches.match(event.request);
+        })
+    );
+    return;
+  }
+
+  // For other resources, use cache-first strategy
   event.respondWith(
     caches.match(event.request)
       .then((response) => {

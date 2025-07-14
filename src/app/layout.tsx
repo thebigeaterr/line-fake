@@ -51,10 +51,35 @@ export default function RootLayout({
                   navigator.serviceWorker.register('/sw.js')
                     .then(function(registration) {
                       console.log('ServiceWorker registration successful');
+                      
+                      // Check for updates every 60 seconds
+                      setInterval(function() {
+                        registration.update();
+                      }, 60000);
+                      
+                      // Handle updates
+                      registration.addEventListener('updatefound', function() {
+                        const newWorker = registration.installing;
+                        if (newWorker) {
+                          newWorker.addEventListener('statechange', function() {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                              // New content is available, force reload
+                              if (confirm('新しいバージョンが利用可能です。アプリを更新しますか？')) {
+                                window.location.reload();
+                              }
+                            }
+                          });
+                        }
+                      });
                     })
                     .catch(function(error) {
                       console.log('ServiceWorker registration failed: ', error);
                     });
+                });
+                
+                // Listen for controllerchange event
+                navigator.serviceWorker.addEventListener('controllerchange', function() {
+                  window.location.reload();
                 });
               }
             `,
