@@ -55,54 +55,16 @@ export default function RootLayout({
                 });
               }
               
+              // Register a minimal service worker for PWA functionality
               if ('serviceWorker' in navigator) {
-                window.addEventListener('load', function() {
-                  // Unregister all existing service workers first
-                  navigator.serviceWorker.getRegistrations().then(function(registrations) {
-                    for(let registration of registrations) {
-                      registration.unregister();
-                    }
-                  }).then(function() {
-                    // Register new service worker
-                    return navigator.serviceWorker.register('/sw.js?v=' + Date.now());
-                  }).then(function(registration) {
+                navigator.serviceWorker.register('/sw.js')
+                  .then(function(registration) {
                     console.log('ServiceWorker registration successful');
-                    
-                    // Force immediate activation
-                    if (registration.waiting) {
-                      registration.waiting.postMessage({type: 'SKIP_WAITING'});
-                    }
-                    
-                    // Check for updates every 5 minutes
-                    setInterval(function() {
-                      registration.update();
-                    }, 300000);
-                    
-                    // Handle updates
-                    registration.addEventListener('updatefound', function() {
-                      const newWorker = registration.installing;
-                      if (newWorker) {
-                        newWorker.addEventListener('statechange', function() {
-                          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                            // Force reload without confirmation only if there's an existing controller
-                            setTimeout(function() {
-                              window.location.reload(true);
-                            }, 1000);
-                          }
-                        });
-                      }
-                    });
-                  }).catch(function(error) {
+                  })
+                  .catch(function(error) {
                     console.log('ServiceWorker registration failed: ', error);
                   });
-                });
-                
-                // Listen for controllerchange event
-                navigator.serviceWorker.addEventListener('controllerchange', function() {
-                  window.location.reload(true);
-                });
               }
-              
             `,
           }}
         />

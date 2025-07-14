@@ -1,79 +1,17 @@
-const CACHE_NAME = 'line-chat-v' + Date.now();
-const urlsToCache = [
-  '/manifest.json',
-  '/icon.svg'
-];
+// Minimal Service Worker for PWA functionality only
+const CACHE_NAME = 'line-chat-offline';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        return cache.addAll(urlsToCache);
+        return cache.addAll([
+          '/manifest.json',
+          '/icon.svg'
+        ]);
       })
       .then(() => {
         return self.skipWaiting();
-      })
-  );
-});
-
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
-});
-
-self.addEventListener('fetch', (event) => {
-  // Skip non-GET requests
-  if (event.request.method !== 'GET') {
-    return;
-  }
-
-  // Skip chrome-extension and other non-http(s) schemes
-  const url = new URL(event.request.url);
-  if (!url.protocol.startsWith('http')) {
-    return;
-  }
-
-  // For HTML pages, always use network-only strategy
-  if (url.pathname === '/' || url.pathname.endsWith('.html')) {
-    event.respondWith(
-      fetch(event.request)
-        .catch(() => {
-          return new Response('Offline', { status: 503 });
-        })
-    );
-    return;
-  }
-
-  // For other resources, use cache-first strategy
-  event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        if (response) {
-          return response;
-        }
-        return fetch(event.request)
-          .then((response) => {
-            // Skip caching for non-successful responses
-            if (!response || response.status !== 200 || response.type !== 'basic') {
-              return response;
-            }
-            
-            // Skip caching for API routes
-            if (url.pathname.startsWith('/api/')) {
-              return response;
-            }
-
-            const responseToCache = response.clone();
-            caches.open(CACHE_NAME)
-              .then((cache) => {
-                cache.put(event.request, responseToCache);
-              });
-            return response;
-          });
-      })
-      .catch(() => {
-        return new Response('Offline');
       })
   );
 });
@@ -93,6 +31,11 @@ self.addEventListener('activate', (event) => {
       return self.clients.claim();
     })
   );
+});
+
+self.addEventListener('fetch', (event) => {
+  // Pass through all requests without caching
+  event.respondWith(fetch(event.request));
 });
 
 self.addEventListener('push', (event) => {
