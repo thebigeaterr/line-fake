@@ -14,7 +14,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, showAvata
   useEffect(() => {
     const formatTime = (date: Date) => {
       return new Date(date).toLocaleTimeString('ja-JP', { 
-        hour: '2-digit', 
+        hour: 'numeric', 
         minute: '2-digit' 
       });
     };
@@ -22,8 +22,19 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, showAvata
     setFormattedTime(formatTime(message.timestamp));
   }, [message.timestamp]);
 
+  // 日付セパレーターの場合は特別な表示
+  if (message.isDateSeparator) {
+    return (
+      <div className="flex justify-center my-4">
+        <div className="bg-[#768FB7] text-white rounded-full" style={{ fontSize: '10px', paddingLeft: '9px', paddingRight: '9px', paddingTop: '6px', paddingBottom: '6px' }}>
+          {message.text}
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className={`flex mb-1.5 items-start ${message.isUser ? 'justify-end' : 'justify-start'}`}>
+    <div className={`flex items-start ${message.isUser ? 'justify-end' : 'justify-start'}`}>
       {!message.isUser && showAvatar && (
         <div className="rounded-full bg-gray-300 flex-shrink-0 overflow-hidden" style={{ width: '30px', height: '30px', marginRight: '12px', marginTop: '-4px' }}>
           {message.avatarSettings?.url ? (

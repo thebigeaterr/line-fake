@@ -17,6 +17,7 @@ export interface Message {
   userId?: string; // ユーザーを識別するID
   imageUrl?: string; // 画像メッセージのURL
   isStamp?: boolean; // スタンプかどうか
+  isDateSeparator?: boolean; // 日付セパレーターかどうか
 }
 
 export interface User {

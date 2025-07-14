@@ -101,18 +101,59 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({
       <div 
         ref={messagesContainerRef}
         data-chat-container
-        className="flex-1 overflow-y-auto px-2 py-6"
-        style={{ scrollBehavior: 'smooth' }}
+        className="flex-1 overflow-y-auto px-2 pt-6"
+        style={{ paddingBottom: '0.375rem', scrollBehavior: 'smooth' }}
       >
-        {messages.map((message, index) => (
-          <MessageBubble 
-            key={message.id} 
-            message={message} 
-            showAvatar={shouldShowAvatar(index)}
-            showTail={shouldShowTail(index)}
-            isGroupChat={isGroupChat}
-          />
-        ))}
+        {messages.map((message, index) => {
+          // 余白を計算
+          let marginBottom = '0.375rem'; // デフォルト6px
+          
+          // 現在のメッセージがスタンプの場合
+          if (message.imageUrl && message.isStamp) {
+            marginBottom = '15px'; // スタンプのデフォルト余白
+            
+            // 次のメッセージが存在する場合
+            if (index < messages.length - 1) {
+              const nextMessage = messages[index + 1];
+              // 次のメッセージもスタンプかつ送信者が異なる場合
+              if (nextMessage.imageUrl && nextMessage.isStamp && 
+                  message.isUser !== nextMessage.isUser) {
+                marginBottom = '22px';
+              }
+            }
+          } else if (index < messages.length - 1) {
+            // 現在のメッセージが通常メッセージで、次がスタンプの場合
+            const nextMessage = messages[index + 1];
+            if (nextMessage.imageUrl && nextMessage.isStamp) {
+              marginBottom = '15px';
+            }
+          }
+          
+          // 最後のメッセージの場合の処理
+          const isLastMessage = index === messages.length - 1;
+          let finalMarginBottom = marginBottom;
+          
+          if (isLastMessage) {
+            // 最後のメッセージの場合、margin-bottomを0にしてpaddingBottomで調整
+            finalMarginBottom = '0';
+            // スタンプの場合は追加のパディングが必要
+            if (message.imageUrl && message.isStamp) {
+              // スタンプの場合は16px - 6px(既存padding) = 10px追加
+              finalMarginBottom = '10px';
+            }
+          }
+          
+          return (
+            <div key={message.id} style={{ marginBottom: finalMarginBottom }}>
+              <MessageBubble 
+                message={message} 
+                showAvatar={shouldShowAvatar(index)}
+                showTail={shouldShowTail(index)}
+                isGroupChat={isGroupChat}
+              />
+            </div>
+          );
+        })}
         <div ref={messagesEndRef} style={{ height: '1px' }} />
       </div>
       

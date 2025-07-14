@@ -34,6 +34,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const [showSaveConfirm, setShowSaveConfirm] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [isStampMode, setIsStampMode] = useState<{[key: string]: boolean}>({});
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [selectedDatePickerIndex, setSelectedDatePickerIndex] = useState<number>(-1);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [showSaveSuccess, setShowSaveSuccess] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -177,6 +181,66 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       setEditingText(message.text);
       setEditingTimestamp(formatDateTimeForInput(message.timestamp));
     }, 100);
+  };
+
+  // 日付表示用のフォーマット関数
+  const formatDateForDisplay = (date: Date) => {
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+    
+    // 年月日のみ比較するため時刻をリセット
+    const compareDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const compareToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const compareYesterday = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate());
+    
+    if (compareDate.getTime() === compareToday.getTime()) {
+      return '今日';
+    } else if (compareDate.getTime() === compareYesterday.getTime()) {
+      return '昨日';
+    } else {
+      return date.toLocaleDateString('ja-JP', { 
+        month: 'numeric', 
+        day: 'numeric', 
+        weekday: 'short' 
+      });
+    }
+  };
+
+  const handleInsertDateSeparator = (afterIndex: number, selectedDate?: Date) => {
+    const timestamp = selectedDate || new Date();
+    const dateMessage: Message = {
+      id: Date.now().toString(),
+      text: formatDateForDisplay(timestamp),
+      isUser: false,
+      timestamp: timestamp,
+      isDateSeparator: true
+    };
+    
+    const newMessages = [...editingMessages];
+    const insertIndex = afterIndex === -1 ? 0 : afterIndex + 1;
+    newMessages.splice(insertIndex, 0, dateMessage);
+    saveChangesLocally(newMessages);
+  };
+
+  const handleDatePickerOpen = (afterIndex: number) => {
+    setSelectedDatePickerIndex(afterIndex);
+    setSelectedDate(new Date());
+    setShowDatePicker(true);
+  };
+
+  const handleDatePickerClose = () => {
+    setShowDatePicker(false);
+    setSelectedDatePickerIndex(-1);
+  };
+
+  const handleDateSelect = (date: Date) => {
+    handleInsertDateSeparator(selectedDatePickerIndex, date);
+    handleDatePickerClose();
+  };
+
+  const handleConfirmDateSelection = () => {
+    handleDateSelect(selectedDate);
   };
 
   const handleOpenAvatarEditor = (forUser: 'user' | 'other') => {
@@ -362,18 +426,37 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           >
             <span>全既読</span>
           </button>
+          <button
+            onClick={async () => {
+              await saveChangesToParent();
+              setHasChanges(false);
+              setShowSaveSuccess(true);
+              setTimeout(() => setShowSaveSuccess(false), 2000);
+            }}
+            className="bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-700 flex items-center space-x-1 text-sm"
+          >
+            <span>保存</span>
+          </button>
         </div>
       </div>
 
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto px-4 py-4">
         {/* 最初のメッセージの前に挿入ボタン */}
-        <div className="flex justify-center mb-2">
+        <div className="flex justify-center items-center space-x-2 mb-2">
           <button
             onClick={() => handleInsertMessage(-1)}
             className="w-8 h-8 bg-gray-200 hover:bg-gray-300 rounded-full flex items-center justify-center text-gray-600 hover:text-gray-800 transition-colors opacity-60 hover:opacity-100"
+            title="メッセージを追加"
           >
             <IoAdd size={16} />
+          </button>
+          <button
+            onClick={() => handleDatePickerOpen(-1)}
+            className="px-3 py-1 bg-blue-100 hover:bg-blue-200 rounded-full text-blue-600 hover:text-blue-800 transition-colors opacity-60 hover:opacity-100 text-xs"
+            title="日付を追加"
+          >
+            日付
           </button>
         </div>
         
@@ -625,12 +708,20 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             </div>
             
             {/* 各メッセージの後に挿入ボタン */}
-            <div className="flex justify-center my-2">
+            <div className="flex justify-center items-center space-x-2 my-2">
               <button
                 onClick={() => handleInsertMessage(index)}
                 className="w-8 h-8 bg-gray-200 hover:bg-gray-300 rounded-full flex items-center justify-center text-gray-600 hover:text-gray-800 transition-colors opacity-60 hover:opacity-100"
+                title="メッセージを追加"
               >
                 <IoAdd size={16} />
+              </button>
+              <button
+                onClick={() => handleDatePickerOpen(index)}
+                className="px-3 py-1 bg-blue-100 hover:bg-blue-200 rounded-full text-blue-600 hover:text-blue-800 transition-colors opacity-60 hover:opacity-100 text-xs"
+                title="日付を追加"
+              >
+                日付
               </button>
             </div>
           </div>
@@ -826,6 +917,71 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* 日付選択ダイアログ */}
+      {showDatePicker && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-sm w-full mx-4">
+            <h3 className="text-lg font-medium mb-4">日付を選択</h3>
+            <input
+              type="date"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={selectedDate.toISOString().split('T')[0]}
+              onChange={(e) => {
+                if (e.target.value) {
+                  const newDate = new Date(e.target.value);
+                  newDate.setHours(12, 0, 0, 0); // 正午に設定して日付の誤差を防ぐ
+                  setSelectedDate(newDate);
+                }
+              }}
+            />
+            <div className="flex justify-between items-center mt-4">
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => handleDateSelect(new Date())}
+                  className="px-3 py-1 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 text-sm"
+                >
+                  今日
+                </button>
+                <button
+                  onClick={() => {
+                    const yesterday = new Date();
+                    yesterday.setDate(yesterday.getDate() - 1);
+                    handleDateSelect(yesterday);
+                  }}
+                  className="px-3 py-1 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 text-sm"
+                >
+                  昨日
+                </button>
+              </div>
+              <div className="flex space-x-3">
+                <button
+                  onClick={handleDatePickerClose}
+                  className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                >
+                  キャンセル
+                </button>
+                <button
+                  onClick={handleConfirmDateSelection}
+                  className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                >
+                  決定
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 保存成功メッセージ */}
+      {showSaveSuccess && (
+        <div className="fixed top-4 right-4 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg z-50 flex items-center space-x-2">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+          </svg>
+          <span>保存しました</span>
         </div>
       )}
     </div>
