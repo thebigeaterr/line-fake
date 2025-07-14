@@ -296,7 +296,7 @@ export const useChatRooms = () => {
           ...room,
           messages,
           lastMessage: lastMsg?.text,
-          lastMessageTime: lastMsg?.timestamp,
+          lastMessageTime: new Date(), // 編集時は現在時刻を使用
           name: userData?.isGroup && userData?.participants ? 
             `グループ (${(userData.participants as unknown[]).length}人)` : 
             (userData?.otherUserName as string) || room.name,
