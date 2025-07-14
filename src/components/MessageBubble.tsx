@@ -87,20 +87,21 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, showAvata
         } ${
           message.imageUrl && message.isStamp ? '' : (
             message.isUser 
-              ? 'bg-[#6de67b] text-black rounded-3xl'
-              : 'bg-white text-black rounded-3xl border border-gray-200 shadow-sm'
+              ? 'bg-[#6de67b] text-black'
+              : 'bg-white text-black border border-gray-200 shadow-sm'
           )
         }`} style={{ 
           fontSize: '0.9375rem', 
-          padding: message.imageUrl ? '0' : '0.5rem 0.9375rem', 
+          padding: message.imageUrl ? '0' : '0.5rem 15px', 
           lineHeight: '1.2',
-          maxWidth: message.imageUrl && message.isStamp ? 'none' : '251px',
+          maxWidth: message.imageUrl && message.isStamp ? 'none' : '258px',
           textAlign: 'left',
           whiteSpace: message.imageUrl ? 'normal' : 'pre-wrap',
-          wordBreak: message.imageUrl ? 'normal' : 'break-word'
+          wordBreak: message.imageUrl ? 'normal' : 'break-word',
+          borderRadius: message.imageUrl && message.isStamp ? '0' : '18px'
         }}>
           {message.imageUrl ? (
-            <div className={message.isStamp ? "" : "overflow-hidden rounded-3xl"}>
+            <div className={message.isStamp ? "" : "overflow-hidden"} style={{ borderRadius: message.isStamp ? '0' : '18px' }}>
               <img 
                 src={message.imageUrl} 
                 alt={message.isStamp ? "スタンプ" : "送信画像"} 
