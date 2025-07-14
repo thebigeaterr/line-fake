@@ -63,7 +63,11 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, showAvata
       
       {/* 自分のメッセージの場合、左側に時刻と既読を表示 */}
       {message.isUser && (
-        <div className="flex flex-col items-end" style={{ alignSelf: 'flex-end', marginBottom: '0.375rem', marginRight: '0.3125rem' }}>
+        <div className="flex flex-col items-end" style={{ 
+          alignSelf: 'flex-end', 
+          marginBottom: '0.375rem', 
+          marginRight: message.imageUrl && message.isStamp ? '16px' : '0.3125rem' 
+        }}>
           {message.isRead && (
             <div className="text-gray-500" style={{ fontSize: '0.5625rem', lineHeight: '1', marginBottom: '0.1875rem' }}>
               既読
@@ -132,7 +136,11 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, showAvata
       
       {/* 相手のメッセージの場合、右側に時刻を表示 */}
       {!message.isUser && (
-        <div className="flex flex-col" style={{ alignSelf: 'flex-end', marginBottom: '0.375rem', marginLeft: '0.3125rem' }}>
+        <div className="flex flex-col" style={{ 
+          alignSelf: 'flex-end', 
+          marginBottom: '0.375rem', 
+          marginLeft: message.imageUrl && message.isStamp ? '16px' : '0.3125rem' 
+        }}>
           <div className="text-gray-500" style={{ fontSize: '0.5625rem', lineHeight: '1' }}>
             {formattedTime}
           </div>
