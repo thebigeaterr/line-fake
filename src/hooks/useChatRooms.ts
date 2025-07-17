@@ -266,7 +266,7 @@ export const useChatRooms = () => {
     
     const updatedRooms = [...chatRooms, newRoom];
     setChatRooms(updatedRooms);
-    saveChatRooms(updatedRooms);
+    saveChatRooms(updatedRooms, true); // 作成操作では競合チェックをスキップ
     return newRoom.id;
   };
 
@@ -274,7 +274,7 @@ export const useChatRooms = () => {
   const deleteChatRoom = (roomId: string) => {
     const updatedRooms = chatRooms.filter(room => room.id !== roomId);
     setChatRooms(updatedRooms);
-    saveChatRooms(updatedRooms);
+    saveChatRooms(updatedRooms, true); // 削除操作では競合チェックをスキップ
     if (currentRoomId === roomId) {
       setCurrentRoomId(null);
     }
@@ -308,7 +308,7 @@ export const useChatRooms = () => {
     });
     
     setChatRooms(updatedRooms);
-    saveChatRooms(updatedRooms);
+    saveChatRooms(updatedRooms, true); // メッセージ追加では競合チェックをスキップ
   };
 
   // チャットルームを更新（管理画面から）
@@ -399,7 +399,7 @@ export const useChatRooms = () => {
       return room;
     });
     setChatRooms(updatedRooms);
-    saveChatRooms(updatedRooms);
+    saveChatRooms(updatedRooms, true); // 未読数リセットでは競合チェックをスキップ
   };
 
   // localStorageをクリア
