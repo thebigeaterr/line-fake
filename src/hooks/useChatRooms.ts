@@ -433,8 +433,8 @@ export const useChatRooms = () => {
         await DataProtectionBackup.createBackup(chatRooms);
         
         // 復元実行
-        setChatRooms(latestBackup.data);
-        await saveChatRooms(latestBackup.data);
+        setChatRooms(latestBackup.data as ChatRoomData[]);
+        await saveChatRooms(latestBackup.data as ChatRoomData[]);
         
         console.log('Emergency backup restored successfully');
         return true;

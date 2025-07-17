@@ -11,7 +11,7 @@ interface AdminPanelProps {
   onBack: () => void;
   initialUserData?: Record<string, unknown>;
   restoreFromEmergencyBackup?: () => Promise<boolean>;
-  getAllBackups?: () => Promise<any[]>;
+  getAllBackups?: () => Promise<Array<{timestamp: string; data: unknown; version: string}>>;
   isEditing?: boolean;
   setIsEditing?: (editing: boolean) => void;
 }
@@ -23,7 +23,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   initialUserData,
   restoreFromEmergencyBackup,
   getAllBackups,
-  isEditing,
   setIsEditing
 }) => {
   const [editingMessages, setEditingMessages] = useState<Message[]>([]);
@@ -48,7 +47,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [showSaveSuccess, setShowSaveSuccess] = useState(false);
   const [showBackupPanel, setShowBackupPanel] = useState(false);
-  const [backupList, setBackupList] = useState<any[]>([]);
+  const [backupList, setBackupList] = useState<Array<{timestamp: string; data: unknown; version: string}>>([]);
   const [isRestoring, setIsRestoring] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -1118,11 +1117,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                           <div className="text-gray-600">
                             Version: {backup.version || 'N/A'}
                           </div>
-                          {backup.data && Array.isArray(backup.data) && (
+                          {backup.data && Array.isArray(backup.data) ? (
                             <div className="text-gray-600">
-                              チャットルーム: {backup.data.length}個
+                              チャットルーム: {(backup.data as unknown[]).length}個
                             </div>
-                          )}
+                          ) : null}
                         </div>
                       ))}
                     </div>

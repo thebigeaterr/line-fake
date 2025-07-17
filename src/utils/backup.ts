@@ -1,10 +1,16 @@
 // データ喪失防止バックアップシステム
+interface BackupData {
+  timestamp: string;
+  data: unknown;
+  version: string;
+}
+
 export class DataProtectionBackup {
   private static BACKUP_KEY = 'line-fake-emergency-backup';
   private static MAX_BACKUPS = 10;
 
   // データを複数の場所にバックアップ
-  static async createBackup(data: any) {
+  static async createBackup(data: unknown) {
     const timestamp = new Date().toISOString();
     const backupData = {
       timestamp,
@@ -39,7 +45,7 @@ export class DataProtectionBackup {
   }
 
   // ローカルストレージからバックアップを取得
-  static getLocalBackups(): any[] {
+  static getLocalBackups(): BackupData[] {
     try {
       const backups = localStorage.getItem(this.BACKUP_KEY);
       return backups ? JSON.parse(backups) : [];
@@ -50,7 +56,7 @@ export class DataProtectionBackup {
   }
 
   // IndexedDBにバックアップを保存
-  private static async saveToIndexedDB(backupData: any): Promise<void> {
+  private static async saveToIndexedDB(backupData: BackupData): Promise<void> {
     return new Promise((resolve, reject) => {
       const request = indexedDB.open('LineFakeBackup', 1);
       
@@ -77,7 +83,7 @@ export class DataProtectionBackup {
   }
 
   // GitHub Gistにバックアップを保存（匿名）
-  private static async saveToGithubGist(backupData: any): Promise<void> {
+  private static async saveToGithubGist(backupData: BackupData): Promise<void> {
     try {
       const response = await fetch('https://api.github.com/gists', {
         method: 'POST',
@@ -113,7 +119,7 @@ export class DataProtectionBackup {
   }
 
   // IndexedDBからバックアップを復元
-  static async restoreFromIndexedDB(): Promise<any[]> {
+  static async restoreFromIndexedDB(): Promise<BackupData[]> {
     return new Promise((resolve, reject) => {
       const request = indexedDB.open('LineFakeBackup', 1);
       
@@ -142,8 +148,8 @@ export class DataProtectionBackup {
   }
 
   // 全てのバックアップソースから復元
-  static async getAllBackups(): Promise<any[]> {
-    const allBackups: any[] = [];
+  static async getAllBackups(): Promise<BackupData[]> {
+    const allBackups: BackupData[] = [];
 
     // ローカルストレージから
     const localBackups = this.getLocalBackups();
