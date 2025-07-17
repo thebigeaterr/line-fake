@@ -1,45 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 
-// デフォルトデータ
-const defaultData = [
-  {
-    id: 'room1',
-    name: 'サンプルユーザー',
-    lastMessage: 'はい、元気です！今日はいい天気ですね。',
-    lastMessageTime: new Date().toISOString(),
-    unreadCount: 0,
-    isGroup: false,
-    participants: [
-      { id: 'user1', name: 'あなた', avatarSettings: null },
-      { id: 'user2', name: 'サンプルユーザー', avatarSettings: null }
-    ],
-    messages: [
-      {
-        id: '1',
-        text: 'こんにちは！',
-        isUser: false,
-        timestamp: new Date(Date.now() - 30000).toISOString(),
-        userName: 'サンプルユーザー'
-      },
-      {
-        id: '2',
-        text: 'こんにちは！元気ですか？',
-        isUser: true,
-        timestamp: new Date(Date.now() - 20000).toISOString(),
-        userName: 'あなた',
-        isRead: true
-      },
-      {
-        id: '3',
-        text: 'はい、元気です！今日はいい天気ですね。',
-        isUser: false,
-        timestamp: new Date(Date.now() - 10000).toISOString(),
-        userName: 'サンプルユーザー'
-      }
-    ]
-  }
-];
+// 危険なdefaultDataを削除 - ユーザーデータを上書きする原因だった
 
 
 // GET: データを読み込み
@@ -105,11 +67,11 @@ export async function GET(request: NextRequest) {
       if (error) {
         console.log('Supabase read error:', error.message);
         
-        // データが存在しない場合（初回のみ）
+        // データが存在しない場合
         if (error.code === 'PGRST116') {
-          console.log('No data found, returning default data without saving...');
-          // データベースには保存せず、デフォルトデータを返すだけ
-          return NextResponse.json(defaultData);
+          console.log('No data found in database');
+          // 空の配列を返す（デフォルトデータは挿入しない）
+          return NextResponse.json([]);
         }
         
         return NextResponse.json({ 
@@ -122,9 +84,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(data.data);
     }
     
-    // Supabaseが利用できない場合はデフォルトデータを返す
-    console.log('Supabase not configured - returning default data');
-    return NextResponse.json(defaultData);
+    // Supabaseが利用できない場合は空の配列を返す
+    console.log('Supabase not configured - returning empty data');
+    return NextResponse.json([]);
   } catch (err) {
     console.error('Failed to read chat data:', err);
     return NextResponse.json({ 

@@ -1,54 +1,24 @@
 import { useState, useEffect } from 'react';
 import { Message, AvatarSettings } from '@/types/message';
 import { ChatRoomData } from '@/components/ChatRoomList';
+import { DataProtectionBackup } from '@/utils/backup';
 
 const STORAGE_KEY = 'line-fake-chatrooms';
 
-const defaultChatRoom: ChatRoomData = {
-  id: 'room1',
-  name: 'サンプルユーザー',
-  lastMessage: 'はい、元気です！今日はいい天気ですね。',
-  lastMessageTime: new Date(),
-  unreadCount: 0,
-  isGroup: false,
-  participants: [
-    { id: 'user1', name: 'あなた', avatarSettings: null },
-    { id: 'user2', name: 'サンプルユーザー', avatarSettings: null }
-  ],
-  messages: [
-    {
-      id: '1',
-      text: 'こんにちは！',
-      isUser: false,
-      timestamp: new Date(Date.now() - 30000),
-      userName: 'サンプルユーザー'
-    },
-    {
-      id: '2',
-      text: 'こんにちは！元気ですか？',
-      isUser: true,
-      timestamp: new Date(Date.now() - 20000),
-      userName: 'あなた',
-      isRead: true
-    },
-    {
-      id: '3',
-      text: 'はい、元気です！今日はいい天気ですね。',
-      isUser: false,
-      timestamp: new Date(Date.now() - 10000),
-      userName: 'サンプルユーザー'
-    }
-  ]
-};
+// 危険なdefaultChatRoomを削除 - ユーザーデータを上書きする原因だった
 
 export const useChatRooms = () => {
   const [chatRooms, setChatRooms] = useState<ChatRoomData[]>([]);
   const [currentRoomId, setCurrentRoomId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [dataVersion, setDataVersion] = useState<number>(0);
+  const [isEditing, setIsEditing] = useState(false);
 
   // サーバーからデータを読み込む
   const loadDataFromServer = async () => {
     try {
+      setError(null); // エラー状態をクリア
       const response = await fetch('/api/chat-data');
       if (response.ok) {
         const data = await response.json();
@@ -62,14 +32,19 @@ export const useChatRooms = () => {
           }))
         }));
         setChatRooms(restoredData);
+        setDataVersion(Date.now()); // データ更新時にバージョンを更新
+        console.log('Data loaded from server successfully');
       } else {
         // サーバーからデータが取得できなかった場合
-        console.log('Server returned non-OK status, skipping default data');
-        // デフォルトデータは設定しない - 既存の状態を維持
+        console.error('Server returned non-OK status:', response.status);
+        setError(`サーバーエラー: ${response.status}`);
+        throw new Error(`Server error: ${response.status}`);
       }
     } catch (error) {
       console.error('Failed to load chat data from server:', error);
-      // フォールバックとしてlocalStorageを使用
+      setError('サーバーとの通信に失敗しました');
+      
+      // サーバーエラー時はlocalStorageからのみ復元を試行
       const savedData = localStorage.getItem(STORAGE_KEY);
       if (savedData) {
         try {
@@ -83,18 +58,16 @@ export const useChatRooms = () => {
             }))
           }));
           setChatRooms(restoredData);
-        } catch (error) {
-          console.error('Failed to parse saved chat rooms:', error);
-          // パースエラーの場合のみデフォルトデータを使用
-          if (chatRooms.length === 0) {
-            setChatRooms([defaultChatRoom]);
-          }
+          setError('オフラインデータを使用しています');
+          console.log('Data restored from localStorage');
+        } catch (parseError) {
+          console.error('Failed to parse saved chat rooms:', parseError);
+          setError('データの復元に失敗しました');
+          console.warn('Keeping empty state - no default data will be inserted');
         }
       } else {
-        // ローカルストレージにもデータがない場合のみデフォルトデータを使用
-        if (chatRooms.length === 0) {
-          setChatRooms([defaultChatRoom]);
-        }
+        // localStorageにもデータがない場合、空の状態を維持
+        console.warn('No saved data found - keeping empty state');
       }
     }
     setIsLoading(false);
@@ -105,6 +78,12 @@ export const useChatRooms = () => {
     
     // 他の端末の変更を検知するため30秒ごとにサーバーデータを確認
     const syncInterval = setInterval(async () => {
+      // 編集中は同期をスキップ
+      if (isEditing) {
+        console.log('Skipping sync - editing in progress');
+        return;
+      }
+      
       try {
         const response = await fetch('/api/chat-data');
         if (response.ok) {
@@ -126,6 +105,8 @@ export const useChatRooms = () => {
                   }))
                 } as ChatRoomData));
                 console.log('Synced with server data');
+                setDataVersion(Date.now()); // 同期時もバージョンを更新
+                setError(null); // 同期成功時はエラーをクリア
                 return restoredData;
               }
               return currentRooms; // 変更なしの場合は現在の状態を維持
@@ -139,19 +120,19 @@ export const useChatRooms = () => {
 
     return () => clearInterval(syncInterval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isEditing]);
 
   // 自動保存: 2分ごとに定期保存
   useEffect(() => {
     const interval = setInterval(() => {
-      if (chatRooms.length > 0) {
-        saveChatRooms(chatRooms);
+      if (chatRooms.length > 0 && !isEditing) {
+        saveChatRooms(chatRooms, true); // 自動保存では競合チェックをスキップ
         console.log('Auto-saved chat data');
       }
     }, 120000); // 2分ごと
 
     return () => clearInterval(interval);
-  }, [chatRooms]);
+  }, [chatRooms, isEditing]);
 
   // 自動保存: ページ離脱時に保存
   useEffect(() => {
@@ -164,7 +145,7 @@ export const useChatRooms = () => {
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'hidden' && chatRooms.length > 0) {
-        saveChatRooms(chatRooms);
+        saveChatRooms(chatRooms, true); // ページ離脱時は競合チェックをスキップ
       }
     };
 
@@ -177,10 +158,53 @@ export const useChatRooms = () => {
     };
   }, [chatRooms]);
 
-  // データをサーバーに保存
-  const saveChatRooms = async (rooms: ChatRoomData[]) => {
+  // データをサーバーに保存（競合検知付き）
+  const saveChatRooms = async (rooms: ChatRoomData[], skipConflictCheck: boolean = false) => {
     console.log('saveChatRooms called with:', rooms.length, 'rooms');
     console.log('Saving room data:', JSON.stringify(rooms[0], null, 2));
+    
+    // 競合検知（保存前にサーバーデータを確認）
+    if (!skipConflictCheck) {
+      try {
+        const response = await fetch('/api/chat-data');
+        if (response.ok) {
+          const serverData = await response.json();
+          if (serverData && Array.isArray(serverData)) {
+            const currentDataString = JSON.stringify(chatRooms);
+            const serverDataString = JSON.stringify(serverData);
+            
+            if (currentDataString !== serverDataString) {
+              console.warn('Data conflict detected - server data has changed');
+              
+              // 競合解決のオプションを提供
+              const userChoice = confirm(
+                '他の端末でデータが変更されています。\n\n' +
+                '「OK」: 現在の変更を保存（他の変更を上書き）\n' +
+                '「キャンセル」: 保存を中止してデータを再読み込み'
+              );
+              
+              if (!userChoice) {
+                // ユーザーが保存をキャンセルした場合
+                await loadDataFromServer();
+                throw new Error('Save cancelled due to data conflict');
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Conflict check failed:', error);
+        // 競合チェックに失敗した場合も保存は続行
+      }
+    }
+    
+    // 保存前に緊急バックアップを作成
+    try {
+      await DataProtectionBackup.createBackup(rooms);
+      console.log('Emergency backup created before save');
+    } catch (backupError) {
+      console.error('Emergency backup failed:', backupError);
+      // バックアップが失敗しても保存は続行
+    }
     
     try {
       const response = await fetch('/api/chat-data', {
@@ -196,6 +220,7 @@ export const useChatRooms = () => {
         console.log('Data saved to server successfully:', result);
         // バックアップとしてlocalStorageにも保存
         localStorage.setItem(STORAGE_KEY, JSON.stringify(rooms));
+        setDataVersion(Date.now()); // 保存成功時にバージョンを更新
       } else {
         const errorText = await response.text();
         console.error('Server save failed:', response.status, errorText);
@@ -289,6 +314,8 @@ export const useChatRooms = () => {
   // チャットルームを更新（管理画面から）
   const updateChatRoom = async (roomId: string, messages: Message[], userData?: Record<string, unknown>) => {
     console.log('updateChatRoom called with:', { roomId, userData });
+    setIsEditing(true); // 編集開始
+    
     const updatedRooms = chatRooms.map(room => {
       if (room.id === roomId) {
         const lastMsg = messages[messages.length - 1];
@@ -360,6 +387,7 @@ export const useChatRooms = () => {
     setChatRooms(updatedRooms);
     // 即座に保存（awaitする）
     await saveChatRooms(updatedRooms);
+    setIsEditing(false); // 編集終了
   };
 
   // 未読数をリセット
@@ -378,8 +406,9 @@ export const useChatRooms = () => {
   const clearAllData = () => {
     try {
       localStorage.removeItem(STORAGE_KEY);
-      setChatRooms([defaultChatRoom]);
+      setChatRooms([]); // 空の状態に設定（デフォルトデータは挿入しない）
       setCurrentRoomId(null);
+      console.log('All data cleared - empty state set');
     } catch (error) {
       console.error('Failed to clear localStorage:', error);
     }
@@ -390,6 +419,43 @@ export const useChatRooms = () => {
     console.log('Manual reload triggered');
     setIsLoading(true);
     await loadDataFromServer();
+  };
+
+  // 緊急バックアップからデータを復元
+  const restoreFromEmergencyBackup = async () => {
+    try {
+      const allBackups = await DataProtectionBackup.getAllBackups();
+      if (allBackups.length > 0) {
+        const latestBackup = allBackups[0];
+        console.log('Restoring from emergency backup:', latestBackup.timestamp);
+        
+        // 復元前に現在のデータをバックアップ
+        await DataProtectionBackup.createBackup(chatRooms);
+        
+        // 復元実行
+        setChatRooms(latestBackup.data);
+        await saveChatRooms(latestBackup.data);
+        
+        console.log('Emergency backup restored successfully');
+        return true;
+      } else {
+        console.log('No emergency backups found');
+        return false;
+      }
+    } catch (error) {
+      console.error('Failed to restore from emergency backup:', error);
+      return false;
+    }
+  };
+
+  // 全てのバックアップを取得
+  const getAllBackups = async () => {
+    try {
+      return await DataProtectionBackup.getAllBackups();
+    } catch (error) {
+      console.error('Failed to get all backups:', error);
+      return [];
+    }
   };
 
   return {
@@ -404,6 +470,12 @@ export const useChatRooms = () => {
     resetUnreadCount,
     clearAllData,
     isLoading,
-    reloadFromServer
+    error,
+    dataVersion,
+    isEditing,
+    setIsEditing,
+    reloadFromServer,
+    restoreFromEmergencyBackup,
+    getAllBackups
   };
 };

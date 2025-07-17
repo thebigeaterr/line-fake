@@ -83,7 +83,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, showAvata
         {/* 相手のメッセージで、グループチャット（3人以上）かつグループの最初の場合は名前を表示 */}
         {!message.isUser && showAvatar && isGroupChat && (
           <div className="text-xs text-gray-600 mb-1 ml-1">
-            {message.userName || 'サンプルユーザー'}
+            {message.userName || 'ユーザー'}
           </div>
         )}
         <div className={`relative ${

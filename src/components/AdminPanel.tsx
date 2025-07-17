@@ -3,19 +3,28 @@ import { IoAdd, IoTrash, IoImage, IoClose, IoChevronBack } from 'react-icons/io5
 import { Message, AvatarSettings } from '@/types/message';
 import { MessageBubble } from './MessageBubble';
 import { AvatarEditor } from './AvatarEditor';
+import { DataProtectionBackup } from '@/utils/backup';
 
 interface AdminPanelProps {
   messages: Message[];
   onUpdateMessages: (messages: Message[], userData?: Record<string, unknown>) => Promise<void>;
   onBack: () => void;
   initialUserData?: Record<string, unknown>;
+  restoreFromEmergencyBackup?: () => Promise<boolean>;
+  getAllBackups?: () => Promise<any[]>;
+  isEditing?: boolean;
+  setIsEditing?: (editing: boolean) => void;
 }
 
 export const AdminPanel: React.FC<AdminPanelProps> = ({
   messages,
   onUpdateMessages,
   onBack,
-  initialUserData
+  initialUserData,
+  restoreFromEmergencyBackup,
+  getAllBackups,
+  isEditing,
+  setIsEditing
 }) => {
   const [editingMessages, setEditingMessages] = useState<Message[]>([]);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
@@ -25,7 +34,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const [editingAvatarFor, setEditingAvatarFor] = useState<'user' | 'other' | null>(null);
   const [userAvatarSettings, setUserAvatarSettings] = useState<AvatarSettings | null>(null);
   const [otherAvatarSettings, setOtherAvatarSettings] = useState<AvatarSettings | null>(null);
-  const [otherUserName, setOtherUserName] = useState('サンプルユーザー');
+  const [otherUserName, setOtherUserName] = useState('');
   const [showNameEditor, setShowNameEditor] = useState(false);
   const [participants, setParticipants] = useState<Array<{id: string; name: string; avatarSettings: AvatarSettings | null}>>([]);
   const [isGroupChat, setIsGroupChat] = useState(false);
@@ -38,6 +47,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const [selectedDatePickerIndex, setSelectedDatePickerIndex] = useState<number>(-1);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [showSaveSuccess, setShowSaveSuccess] = useState(false);
+  const [showBackupPanel, setShowBackupPanel] = useState(false);
+  const [backupList, setBackupList] = useState<any[]>([]);
+  const [isRestoring, setIsRestoring] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -49,6 +61,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         isRead: msg.isUser && msg.isRead === undefined ? true : msg.isRead
       }));
       setEditingMessages(messagesWithReadStatus);
+      setIsEditing?.(true); // 編集開始
     }
     
     // 初期ユーザーデータから設定を読み込み（優先）
@@ -138,6 +151,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     if (hasChanges) {
       setShowSaveConfirm(true);
     } else {
+      setIsEditing?.(false); // 編集終了
       onBack();
     }
   };
@@ -145,13 +159,64 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const handleSaveAndBack = async () => {
     await saveChangesToParent();
     setShowSaveConfirm(false);
+    setIsEditing?.(false); // 編集終了
     onBack();
   };
 
   const handleDiscardAndBack = () => {
     setShowSaveConfirm(false);
     setHasChanges(false);
+    setIsEditing?.(false); // 編集終了
     onBack();
+  };
+
+  const handleShowBackupPanel = async () => {
+    setShowBackupPanel(true);
+    if (getAllBackups) {
+      const backups = await getAllBackups();
+      setBackupList(backups);
+    }
+  };
+
+  const handleRestoreFromBackup = async () => {
+    if (restoreFromEmergencyBackup) {
+      setIsRestoring(true);
+      try {
+        const success = await restoreFromEmergencyBackup();
+        if (success) {
+          setShowSaveSuccess(true);
+          setTimeout(() => setShowSaveSuccess(false), 3000);
+          setShowBackupPanel(false);
+        } else {
+          alert('バックアップからの復元に失敗しました');
+        }
+      } catch (error) {
+        console.error('Backup restore error:', error);
+        alert('バックアップからの復元中にエラーが発生しました');
+      } finally {
+        setIsRestoring(false);
+      }
+    }
+  };
+
+  const handleCreateManualBackup = async () => {
+    try {
+      const success = await DataProtectionBackup.createBackup(editingMessages);
+      if (success) {
+        setShowSaveSuccess(true);
+        setTimeout(() => setShowSaveSuccess(false), 3000);
+        // バックアップリストを更新
+        if (getAllBackups) {
+          const backups = await getAllBackups();
+          setBackupList(backups);
+        }
+      } else {
+        alert('手動バックアップの作成に失敗しました');
+      }
+    } catch (error) {
+      console.error('Manual backup error:', error);
+      alert('手動バックアップの作成中にエラーが発生しました');
+    }
   };
 
   const handleInsertMessage = (afterIndex: number) => {
@@ -413,6 +478,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               <span>相手設定</span>
             </button>
           )}
+          <button
+            onClick={handleShowBackupPanel}
+            className="bg-green-500 text-white px-3 py-2 rounded-lg hover:bg-green-600 flex items-center space-x-1 text-sm"
+          >
+            <span>バックアップ</span>
+          </button>
           <button
             onClick={() => {
               // 全ての自分のメッセージを既読に
@@ -982,6 +1053,84 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
           </svg>
           <span>保存しました</span>
+        </div>
+      )}
+
+      {/* Backup Panel Modal */}
+      {showBackupPanel && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96 max-w-[90vw] max-h-[80vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold">データバックアップ</h2>
+              <button
+                onClick={() => setShowBackupPanel(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <IoClose size={24} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="border-b pb-4">
+                <h3 className="font-semibold mb-2">緊急復元</h3>
+                <p className="text-sm text-gray-600 mb-3">
+                  最新の緊急バックアップからデータを復元します
+                </p>
+                <button
+                  onClick={handleRestoreFromBackup}
+                  disabled={isRestoring}
+                  className="w-full bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 disabled:opacity-50"
+                >
+                  {isRestoring ? '復元中...' : '緊急復元を実行'}
+                </button>
+              </div>
+
+              <div className="border-b pb-4">
+                <h3 className="font-semibold mb-2">手動バックアップ</h3>
+                <p className="text-sm text-gray-600 mb-3">
+                  現在のデータを手動でバックアップします
+                </p>
+                <button
+                  onClick={handleCreateManualBackup}
+                  className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+                >
+                  手動バックアップを作成
+                </button>
+              </div>
+
+              <div>
+                <h3 className="font-semibold mb-2">バックアップ履歴</h3>
+                <div className="max-h-60 overflow-y-auto">
+                  {backupList.length === 0 ? (
+                    <p className="text-sm text-gray-500 text-center py-4">
+                      バックアップが見つかりません
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      {backupList.map((backup, index) => (
+                        <div
+                          key={index}
+                          className="bg-gray-50 rounded-lg p-3 text-sm"
+                        >
+                          <div className="font-medium">
+                            {new Date(backup.timestamp).toLocaleString('ja-JP')}
+                          </div>
+                          <div className="text-gray-600">
+                            Version: {backup.version || 'N/A'}
+                          </div>
+                          {backup.data && Array.isArray(backup.data) && (
+                            <div className="text-gray-600">
+                              チャットルーム: {backup.data.length}個
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

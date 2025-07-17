@@ -4,30 +4,7 @@ import { Message, AvatarSettings } from '@/types/message';
 const STORAGE_KEY = 'line-fake-messages';
 const USER_DATA_KEY = 'line-fake-user-data';
 
-const defaultMessages: Message[] = [
-  {
-    id: '1',
-    text: 'こんにちは！',
-    isUser: false,
-    timestamp: new Date(Date.now() - 30000),
-    userName: 'サンプルユーザー'
-  },
-  {
-    id: '2',
-    text: 'こんにちは！元気ですか？',
-    isUser: true,
-    timestamp: new Date(Date.now() - 20000),
-    userName: 'あなた',
-    isRead: true
-  },
-  {
-    id: '3',
-    text: 'はい、元気です！今日はいい天気ですね。',
-    isUser: false,
-    timestamp: new Date(Date.now() - 10000),
-    userName: 'サンプルユーザー'
-  }
-];
+// 危険なdefaultMessagesを削除 - ユーザーデータを上書きする原因だった
 
 interface UserData {
   otherUserName: string;
@@ -41,20 +18,17 @@ interface UserData {
   isGroup?: boolean;
 }
 
-const defaultUserData: UserData = {
-  otherUserName: 'サンプルユーザー',
-  otherAvatarSettings: null,
-  userAvatarSettings: null,
-  participants: [
-    { id: 'user1', name: 'あなた', avatarSettings: null },
-    { id: 'user2', name: 'サンプルユーザー', avatarSettings: null }
-  ],
-  isGroup: false
-};
+// 危険なdefaultUserDataを削除 - ユーザーデータを上書きする原因だった
 
 export const useMessages = () => {
-  const [messages, setMessages] = useState<Message[]>(defaultMessages);
-  const [userData, setUserData] = useState<UserData>(defaultUserData);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [userData, setUserData] = useState<UserData>({
+    otherUserName: '',
+    otherAvatarSettings: null,
+    userAvatarSettings: null,
+    participants: [],
+    isGroup: false
+  });
 
   useEffect(() => {
     // メッセージデータの読み込み
@@ -71,6 +45,7 @@ export const useMessages = () => {
         setMessages(messagesWithDates);
       } catch (error) {
         console.error('Failed to parse saved messages:', error);
+        // エラー時は空の状態を維持（デフォルトデータは挿入しない）
       }
     }
 
@@ -84,6 +59,7 @@ export const useMessages = () => {
         setUserData(parsedUserData);
       } catch (error) {
         console.error('Failed to parse saved user data:', error);
+        // エラー時は空の状態を維持（デフォルトデータは挿入しない）
       }
     }
   }, []);
@@ -130,7 +106,13 @@ export const useMessages = () => {
 
   const clearAllData = () => {
     saveMessages([]);
-    saveUserData(defaultUserData);
+    saveUserData({
+      otherUserName: '',
+      otherAvatarSettings: null,
+      userAvatarSettings: null,
+      participants: [],
+      isGroup: false
+    });
   };
 
   const updateAllUserMessagesToRead = () => {

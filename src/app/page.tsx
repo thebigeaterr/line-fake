@@ -23,7 +23,12 @@ export default function Home() {
     addMessage, 
     updateChatRoom, 
     resetUnreadCount,
-    isLoading
+    isLoading,
+    error,
+    isEditing,
+    setIsEditing,
+    restoreFromEmergencyBackup,
+    getAllBackups
     // reloadFromServer,
     // clearAllData 
   } = useChatRooms();
@@ -100,6 +105,8 @@ export default function Home() {
             onCreateRoom={handleCreateRoom}
             onDeleteRoom={handleDeleteRoom}
             isLoading={isLoading}
+            error={error}
+            isEditing={isEditing}
           />
         </div>
       ) : viewMode === 'chat' && currentRoom ? (
@@ -127,6 +134,10 @@ export default function Home() {
               participants: currentRoom.participants,
               isGroup: currentRoom.isGroup
             }}
+            restoreFromEmergencyBackup={restoreFromEmergencyBackup}
+            getAllBackups={getAllBackups}
+            isEditing={isEditing}
+            setIsEditing={setIsEditing}
           />
         </div>
       ) : null}
