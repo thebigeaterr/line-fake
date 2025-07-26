@@ -13,6 +13,7 @@ export const useChatRooms = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dataVersion, setDataVersion] = useState<number>(0);
+  // const [lastSaveTimestamp, setLastSaveTimestamp] = useState<number>(Date.now());
   const [isEditing, setIsEditing] = useState(false);
 
   // サーバーからデータを読み込む
@@ -76,49 +77,12 @@ export const useChatRooms = () => {
   useEffect(() => {
     loadDataFromServer();
     
-    // 他の端末の変更を検知するため30秒ごとにサーバーデータを確認
-    const syncInterval = setInterval(async () => {
-      // 編集中は同期をスキップ
-      if (isEditing) {
-        console.log('Skipping sync - editing in progress');
-        return;
-      }
-      
-      try {
-        const response = await fetch('/api/chat-data');
-        if (response.ok) {
-          const serverData = await response.json();
-          if (serverData && Array.isArray(serverData)) {
-            // 現在の状態を取得するため関数型更新を使用
-            setChatRooms(currentRooms => {
-              const currentDataString = JSON.stringify(currentRooms);
-              const serverDataString = JSON.stringify(serverData);
-              
-              if (currentDataString !== serverDataString) {
-                console.log('Server data changed, syncing...');
-                const restoredData: ChatRoomData[] = serverData.map((room: Record<string, unknown>) => ({
-                  ...room,
-                  lastMessageTime: room.lastMessageTime ? new Date(room.lastMessageTime as string) : undefined,
-                  messages: (room.messages as Record<string, unknown>[]).map((msg: Record<string, unknown>) => ({
-                    ...msg,
-                    timestamp: new Date(msg.timestamp as string)
-                  }))
-                } as ChatRoomData));
-                console.log('Synced with server data');
-                setDataVersion(Date.now()); // 同期時もバージョンを更新
-                setError(null); // 同期成功時はエラーをクリア
-                return restoredData;
-              }
-              return currentRooms; // 変更なしの場合は現在の状態を維持
-            });
-          }
-        }
-      } catch (error) {
-        console.log('Sync check failed:', error);
-      }
-    }, 30000); // 30秒ごと
+    // 緊急対策: 30秒同期を無効化 - データ後退の原因の可能性
+    // const syncInterval = setInterval(async () => {
+    //   console.log('Auto-sync temporarily disabled to prevent data loss');
+    // }, 30000);
 
-    return () => clearInterval(syncInterval);
+    // return () => clearInterval(syncInterval); // 同期無効化中
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEditing]);
 
@@ -134,18 +98,29 @@ export const useChatRooms = () => {
     return () => clearInterval(interval);
   }, [chatRooms, isEditing]);
 
-  // 自動保存: ページ離脱時に保存
+  // 修正: ページ離脱時の保存で古い状態が保存される問題を防ぐ
   useEffect(() => {
     const handleBeforeUnload = () => {
-      if (chatRooms.length > 0) {
-        // 同期的な保存（ページ離脱時）
-        navigator.sendBeacon('/api/chat-data', JSON.stringify(chatRooms));
-      }
+      // 関数型更新で最新の状態を取得
+      setChatRooms(currentRooms => {
+        if (currentRooms.length > 0) {
+          console.log('Saving current rooms on page unload:', currentRooms.length);
+          navigator.sendBeacon('/api/chat-data', JSON.stringify(currentRooms));
+        }
+        return currentRooms; // 状態は変更しない
+      });
     };
 
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden' && chatRooms.length > 0) {
-        saveChatRooms(chatRooms, true); // ページ離脱時は競合チェックをスキップ
+      if (document.visibilityState === 'hidden') {
+        // 関数型更新で最新の状態を取得
+        setChatRooms(currentRooms => {
+          if (currentRooms.length > 0) {
+            console.log('Saving current rooms on visibility change:', currentRooms.length);
+            saveChatRooms(currentRooms, true); // 競合チェックをスキップ
+          }
+          return currentRooms; // 状態は変更しない
+        });
       }
     };
 
@@ -156,7 +131,7 @@ export const useChatRooms = () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [chatRooms]);
+  }, []); // 依存配列を空にしてクロージャー問題を防ぐ
 
   // データをサーバーに保存（競合検知付き）
   const saveChatRooms = async (rooms: ChatRoomData[], skipConflictCheck: boolean = false) => {
@@ -216,11 +191,19 @@ export const useChatRooms = () => {
       });
 
       if (response.ok) {
-        const result = await response.json();
-        console.log('Data saved to server successfully:', result);
-        // バックアップとしてlocalStorageにも保存
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(rooms));
-        setDataVersion(Date.now()); // 保存成功時にバージョンを更新
+        await response.json();
+        const saveTimestamp = Date.now();
+        console.log('Data saved to server successfully at:', new Date(saveTimestamp).toISOString());
+        
+        // タイムスタンプ付きでlocalStorageに保存
+        const dataWithTimestamp = {
+          data: rooms,
+          timestamp: saveTimestamp,
+          version: dataVersion
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(dataWithTimestamp));
+        setDataVersion(saveTimestamp);
+        // setLastSaveTimestamp(saveTimestamp);
       } else {
         const errorText = await response.text();
         console.error('Server save failed:', response.status, errorText);
