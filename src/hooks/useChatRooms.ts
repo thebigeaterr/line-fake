@@ -22,7 +22,25 @@ export const useChatRooms = () => {
       setError(null); // エラー状態をクリア
       const response = await fetch('/api/chat-data');
       if (response.ok) {
-        const data = await response.json();
+        const responseData = await response.json();
+        console.log('Server response:', responseData);
+        
+        // 新形式（タイムスタンプ付き）と旧形式（配列直接）の両方に対応
+        let data, serverTimestamp;
+        if (responseData.data !== undefined) {
+          // 新形式
+          data = responseData.data;
+          serverTimestamp = responseData.timestamp;
+          console.log('Using new format with timestamp:', serverTimestamp);
+        } else if (Array.isArray(responseData)) {
+          // 旧形式のフォールバック
+          data = responseData;
+          serverTimestamp = Date.now();
+          console.log('Using legacy format, assigning current timestamp');
+        } else {
+          throw new Error('Unknown response format');
+        }
+        
         // 日付を復元
         const restoredData = data.map((room: Record<string, unknown>) => ({
           ...room,
@@ -33,7 +51,7 @@ export const useChatRooms = () => {
           }))
         }));
         setChatRooms(restoredData);
-        setDataVersion(Date.now()); // データ更新時にバージョンを更新
+        setDataVersion(serverTimestamp || Date.now()); // サーバーのタイムスタンプを使用
         console.log('Data loaded from server successfully');
       } else {
         // サーバーからデータが取得できなかった場合
@@ -97,7 +115,7 @@ export const useChatRooms = () => {
 
     // return () => clearInterval(syncInterval); // 同期無効化中
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isEditing]);
+  }, []); // 依存配列を空にして初回のみ実行 - isEditing依存はデータ後退の原因
 
   // 修正: 2分ごとの自動保存で古いデータが保存される問題を解決
   useEffect(() => {
@@ -123,7 +141,19 @@ export const useChatRooms = () => {
       setChatRooms(currentRooms => {
         if (currentRooms.length > 0) {
           console.log('Saving current rooms on page unload:', currentRooms.length);
-          navigator.sendBeacon('/api/chat-data', JSON.stringify(currentRooms));
+          const success = navigator.sendBeacon('/api/chat-data', JSON.stringify(currentRooms));
+          if (!success) {
+            console.warn('sendBeacon failed, attempting synchronous save');
+            // フォールバック: 同期的なfetch（非推奨だが緊急時）
+            try {
+              const xhr = new XMLHttpRequest();
+              xhr.open('POST', '/api/chat-data', false); // 同期
+              xhr.setRequestHeader('Content-Type', 'application/json');
+              xhr.send(JSON.stringify(currentRooms));
+            } catch (e) {
+              console.error('Synchronous save also failed:', e);
+            }
+          }
         }
         return currentRooms; // 状態は変更しない
       });
@@ -144,10 +174,20 @@ export const useChatRooms = () => {
 
     window.addEventListener('beforeunload', handleBeforeUnload);
     document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    // bfcache対応: ブラウザの戦進/後退で古いデータが復元されるのを防ぐ
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        console.warn('Page restored from bfcache, reloading fresh data');
+        loadDataFromServer();
+      }
+    };
+    window.addEventListener('pageshow', handlePageShow);
 
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('pageshow', handlePageShow);
     };
   }, []); // 依存配列を空にしてクロージャー問題を防ぐ
 
