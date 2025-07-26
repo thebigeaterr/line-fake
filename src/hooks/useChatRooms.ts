@@ -25,33 +25,21 @@ export const useChatRooms = () => {
         const responseData = await response.json();
         console.log('Server response:', responseData);
         
-        // 新形式（タイムスタンプ付き）と旧形式（配列直接）の両方に対応
-        let data, serverTimestamp;
-        if (responseData.data !== undefined) {
-          // 新形式
-          data = responseData.data;
-          serverTimestamp = responseData.timestamp;
-          console.log('Using new format with timestamp:', serverTimestamp);
-        } else if (Array.isArray(responseData)) {
-          // 旧形式のフォールバック
-          data = responseData;
-          serverTimestamp = Date.now();
-          console.log('Using legacy format, assigning current timestamp');
-        } else {
-          throw new Error('Unknown response format');
-        }
+        // 既存の配列形式に戻してシンプル化
+        const data = Array.isArray(responseData) ? responseData : [];
+        console.log('Server data loaded:', data.length, 'rooms');
         
         // 日付を復元
-        const restoredData = data.map((room: Record<string, unknown>) => ({
+        const restoredData: ChatRoomData[] = data.map((room: Record<string, unknown>) => ({
           ...room,
           lastMessageTime: room.lastMessageTime ? new Date(room.lastMessageTime as string) : undefined,
           messages: (room.messages as Record<string, unknown>[]).map((msg: Record<string, unknown>) => ({
             ...msg,
             timestamp: new Date(msg.timestamp as string)
           }))
-        }));
+        } as ChatRoomData));
         setChatRooms(restoredData);
-        setDataVersion(serverTimestamp || Date.now()); // サーバーのタイムスタンプを使用
+        setDataVersion(Date.now()); // データ更新時にバージョンを更新
         console.log('Data loaded from server successfully');
       } else {
         // サーバーからデータが取得できなかった場合

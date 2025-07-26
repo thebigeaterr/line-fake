@@ -71,11 +71,7 @@ export async function GET(request: NextRequest) {
         if (error.code === 'PGRST116') {
           console.log('No data found in database');
           // 空の配列を返す（デフォルトデータは挿入しない）
-          return NextResponse.json({
-            data: [],
-            timestamp: 0,
-            updated_at: null
-          });
+          return NextResponse.json([]);
         }
         
         return NextResponse.json({ 
@@ -85,21 +81,13 @@ export async function GET(request: NextRequest) {
       }
       
       console.log('Supabase read success');
-      // タイムスタンプ情報と共に返す
-      return NextResponse.json({
-        data: data.data,
-        timestamp: data.last_updated || Date.now(),
-        updated_at: data.updated_at
-      });
+      // 既存のテーブル構造に合わせてシンプルに返す
+      return NextResponse.json(data.data);
     }
     
     // Supabaseが利用できない場合は空の配列を返す
     console.log('Supabase not configured - returning empty data');
-    return NextResponse.json({
-      data: [],
-      timestamp: 0,
-      updated_at: null
-    });
+    return NextResponse.json([]);
   } catch (err) {
     console.error('Failed to read chat data:', err);
     return NextResponse.json({ 
@@ -140,16 +128,13 @@ export async function POST(request: NextRequest) {
     if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
       console.log('Attempting to save to Supabase...');
       
-      // タイムスタンプ付きでデータを更新（古いデータの上書きを防ぐ）
-      const timestamp = Date.now();
+      // データを更新（既存のテーブル構造に合わせて修正）
       const { error, data: result } = await supabase
         .from('chat_data')
         .upsert([
           { 
             id: 'default', 
-            data: cleanData,
-            last_updated: timestamp,
-            updated_at: new Date().toISOString()
+            data: cleanData
           }
         ]);
       
