@@ -51,17 +51,20 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const [isRestoring, setIsRestoring] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // 初回マウント時のみ初期化
   useEffect(() => {
-    // editingMessagesが空の場合のみ初期化
-    if (editingMessages.length === 0) {
-      // 既存のメッセージで自分のメッセージに既読状態がない場合は既読に設定
-      const messagesWithReadStatus = messages.map(msg => ({
-        ...msg,
-        isRead: msg.isUser && msg.isRead === undefined ? true : msg.isRead
-      }));
-      setEditingMessages(messagesWithReadStatus);
-      setIsEditing?.(true); // 編集開始
-    }
+    // 既存のメッセージで自分のメッセージに既読状態がない場合は既読に設定
+    const messagesWithReadStatus = messages.map(msg => ({
+      ...msg,
+      isRead: msg.isUser && msg.isRead === undefined ? true : msg.isRead
+    }));
+    setEditingMessages(messagesWithReadStatus);
+    setIsEditing?.(true); // 編集開始
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // 空の依存配列で初回のみ実行
+  
+  // 初期ユーザーデータの設定
+  useEffect(() => {
     
     // 初期ユーザーデータから設定を読み込み（優先）
     if (initialUserData) {
@@ -103,7 +106,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     if (firstUserMessage && firstUserMessage.avatarSettings && !initialUserData?.userAvatarSettings) {
       setUserAvatarSettings(firstUserMessage.avatarSettings);
     }
-  }, [messages, initialUserData, editingMessages.length]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {

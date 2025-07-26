@@ -49,8 +49,21 @@ export const useChatRooms = () => {
       const savedData = localStorage.getItem(STORAGE_KEY);
       if (savedData) {
         try {
-          const parsedData = JSON.parse(savedData);
-          const restoredData = parsedData.map((room: Record<string, unknown>) => ({
+          const parsed = JSON.parse(savedData);
+          let dataToRestore;
+          
+          // 新形式（タイムスタンプ付き）と旧形式の両方に対応
+          if (parsed.data && parsed.timestamp) {
+            console.log('Found timestamped data from:', new Date(parsed.timestamp).toISOString());
+            dataToRestore = parsed.data;
+          } else if (Array.isArray(parsed)) {
+            console.log('Found legacy format data');
+            dataToRestore = parsed;
+          } else {
+            throw new Error('Unknown data format');
+          }
+          
+          const restoredData = dataToRestore.map((room: Record<string, unknown>) => ({
             ...room,
             lastMessageTime: room.lastMessageTime ? new Date(room.lastMessageTime as string) : undefined,
             messages: (room.messages as Record<string, unknown>[]).map((msg: Record<string, unknown>) => ({
@@ -86,17 +99,22 @@ export const useChatRooms = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEditing]);
 
-  // 自動保存: 2分ごとに定期保存
+  // 修正: 2分ごとの自動保存で古いデータが保存される問題を解決
   useEffect(() => {
     const interval = setInterval(() => {
-      if (chatRooms.length > 0 && !isEditing) {
-        saveChatRooms(chatRooms, true); // 自動保存では競合チェックをスキップ
-        console.log('Auto-saved chat data');
-      }
+      // 関数型更新で最新の状態を取得
+      setChatRooms(currentRooms => {
+        // 編集状態も最新の値を確認
+        if (currentRooms.length > 0 && !isEditing) {
+          console.log('Auto-saving current data:', currentRooms.length, 'rooms');
+          saveChatRooms(currentRooms, true);
+        }
+        return currentRooms; // 状態は変更しない
+      });
     }, 120000); // 2分ごと
 
     return () => clearInterval(interval);
-  }, [chatRooms, isEditing]);
+  }, [isEditing]); // chatRoomsを依存から除外してクロージャー問題を防ぐ
 
   // 修正: ページ離脱時の保存で古い状態が保存される問題を防ぐ
   useEffect(() => {
